@@ -70,9 +70,21 @@ namespace SuperSharpShop
             panel.BackColor = this.BackColor;
             panel.ForeColor = Color.Honeydew;
             panel.Location = new Point(250, 0);
-            panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - 250, Screen.PrimaryScreen.Bounds.Height);
+            setPanelSize(panel);
             panel.Name = name;
             panel.Text = name;
+            panel.AutoScroll = true;
+            //panel.AutoSize = true;
+        }
+
+        public void setPanelSize(Control panel)
+        {
+            if (Screen.PrimaryScreen.Bounds.Height > (panel.Controls.Count / 3) * 300 + 50)
+                panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - 250, Screen.PrimaryScreen.Bounds.Height);
+            else
+            {
+                panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - 250, (panel.Controls.Count / 3) * 300 + 650);
+            }
         }
 
         public void setCard(object sender, EventArgs e)
@@ -122,7 +134,7 @@ namespace SuperSharpShop
         
         
 
-        public void setItem(Panel panel, GroupBox item, String name, String description, float price, String image)
+        public void setItem(Panel panel, GroupBox item, String name, String description, double price, String image)
         {
             panel.Controls.Add(item);
             item.Name = name;
@@ -165,10 +177,10 @@ namespace SuperSharpShop
             Label descriptionCard = new Label();
             descriptionCard.Name = name;
             descriptionCard.Text = description;
-            descriptionCard.TextAlign = ContentAlignment.MiddleLeft;
+            descriptionCard.TextAlign = ContentAlignment.TopLeft;
             descriptionCard.Size = new Size(pb.Size.Width, item.Size.Height - (pb.Size.Height + pb.Location.Y));
             descriptionCard.Location = new Point(pb.Location.X, pb.Size.Height + pb.Location.Y);
-            descriptionCard.BackColor = ColorTranslator.FromHtml("#202020");
+            descriptionCard.BackColor = ColorTranslator.FromHtml("#303030");
             item.Controls.Add(descriptionCard);
             Console.WriteLine($"{priceCard.Name}: X: {priceCard.Location.X}, Y: {priceCard.Location.Y}, Width: {priceCard.Size.Width}, Height: {priceCard.Size.Height}");
             foreach (Control child in item.Controls)
@@ -176,6 +188,7 @@ namespace SuperSharpShop
                 child.MouseEnter += new EventHandler(setCardChild);
                 child.MouseLeave += new EventHandler(removeCardChild);
             }
+            setPanelSize(panel);
         }
 
         #region Windows Form Designer generated code
@@ -205,13 +218,14 @@ namespace SuperSharpShop
             searchButton.Size = new Size(55, 21);
             searchButton.Location = new Point(180, 50);
             searchButton.BackColor = ColorTranslator.FromHtml("#858585");
-            searchButton.Font = new Font("Helvetica Neue", 7);
+            searchButton.Font = new Font("Arial", 7);
             setPanel(storePanel, "Shop");
             setPanel(ownedPanel, "Library");
             setPanel(installedPanel, "Installed");
             setPanelButton(storeButton, "Shop");
             setPanelButton(ownedButton, "Library");
             setPanelButton(installedButton, "Installed");
+            this.WindowState = FormWindowState.Maximized;
             //storePanel.BackColor = Color.Aqua;
             //ownedPanel.BackColor = Color.Gold;
             //installedPanel.BackColor = Color.Green;

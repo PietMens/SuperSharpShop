@@ -7,11 +7,11 @@ namespace SuperSharpShop
     {
         private String name;
         private String type;
-        private float price;
+        private double price;
         private String imagePath;
         private String description;
 
-        public Item(String name, String type, float price, String imagePath, String description, String where)
+        public Item(String name, String type, double price, String imagePath, String description, String where)
         {
             Name = name;
             Type = type;
@@ -44,7 +44,7 @@ namespace SuperSharpShop
             set => type = value;
         }
 
-        public float Price
+        public double Price
         {
             get => price;
             set => price = value;
