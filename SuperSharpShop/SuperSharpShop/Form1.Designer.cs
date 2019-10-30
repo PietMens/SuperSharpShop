@@ -39,11 +39,17 @@ namespace SuperSharpShop
                 }
                 count = count + 1;
             }
+            Panel Panel1 = panels[index];
             if (this.Controls.Count > 1)
             {
+                if (this.Controls[1].Name != "Search")
+                {
+                    lastPanel = Panel1;
+                    Console.WriteLine(lastPanel.Name);
+                }
                 this.Controls.RemoveAt(1);
             }
-            this.Controls.Add(panels[index]);
+            this.Controls.Add(Panel1);
         }
 
         public void setPanelButton(Button button, String name)
@@ -64,17 +70,56 @@ namespace SuperSharpShop
             button.Click += new EventHandler(panelSwitch);
         }
 
+        public void clickItem(object sender, EventArgs e)
+        {
+            PictureBox pb = (PictureBox) sender;
+            Control control = pb.Parent;
+            Panel panel = new Panel();
+            setPanel(panel, control.Name);
+            if (this.Controls.Count > 1)
+            {
+                if (control.Name != "Search")
+                {
+                    lastPanel = control;
+                }
+                this.Controls.RemoveAt(1);
+            }
+            this.Controls.Add(panel);
+            PictureBox pictureBox = new PictureBox();
+            pictureBox.BorderStyle = BorderStyle.Fixed3D;
+            pictureBox.Name = pb.Name;
+            pictureBox.Location = new Point(100, 50);
+            pictureBox.Size = new Size(panel.Size.Width - pictureBox.Location.X * 2, 400);
+            pictureBox.BackgroundImage = Image.FromFile(pb.Name);
+            pictureBox.BackgroundImageLayout = ImageLayout.Stretch;
+            panel.Controls.Add(pictureBox);
+        }
+
         public void setPanel(Panel panel, String name)
         {
             panels.Add(panel);
             panel.BackColor = this.BackColor;
             panel.ForeColor = Color.Honeydew;
             panel.Location = new Point(250, 0);
-            setPanelSize(panel);
+            //setPanelSize(panel);
+            panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - 250, Screen.PrimaryScreen.Bounds.Height);
             panel.Name = name;
             panel.Text = name;
+            List<String> list = new List<string>();
+            foreach (Label label in titles)
+            {
+                list.Add(label.Text);
+            }
+            if (name != "Search" && !list.Contains(name))
+            {
+                setPanelButton(new Button(), name);
+            }
+
+            panel.VerticalScroll.Visible = true;
+            panel.VerticalScroll.Enabled = true;
             panel.AutoScroll = true;
-            //panel.AutoSize = true;
+            panel.AutoScrollPosition = new Point(Screen.PrimaryScreen.Bounds.Width - 100, 0);
+            panel.AutoScrollMinSize = new Size(10, Screen.PrimaryScreen.Bounds.Height);
         }
 
         public void setPanelSize(Control panel)
@@ -83,7 +128,7 @@ namespace SuperSharpShop
                 panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - 250, Screen.PrimaryScreen.Bounds.Height);
             else
             {
-                panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - 250, (panel.Controls.Count / 3) * 300 + 650);
+                panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - 250, (panel.Controls.Count / 3) * 300);
             }
         }
 
@@ -134,11 +179,11 @@ namespace SuperSharpShop
         
         
 
-        public void setItem(Panel panel, GroupBox item, String name, String description, double price, String image)
+        public void setItem(Panel panel, GroupBox item, String name, String description, String price, String image)
         {
             panel.Controls.Add(item);
             item.Name = name;
-            item.Size = new Size((Screen.PrimaryScreen.Bounds.Width - 450) / 3, 250);
+            item.Size = new Size((Screen.PrimaryScreen.Bounds.Width - 450) / 3, (Screen.PrimaryScreen.Bounds.Height - 25) / 3);
             item.Location = new Point(50 + panel.Controls.IndexOf(item) % 3 * (item.Size.Width + 50),panel.Controls.IndexOf(item) / 3 * (item.Size.Height + 25) + 25);
             item.SuspendLayout();
             item.TabIndex = 0;
@@ -151,7 +196,7 @@ namespace SuperSharpShop
             title.Text = name;
             title.Size = new Size(200, 25);
             title.TextAlign = ContentAlignment.MiddleCenter;
-            title.Location = new Point(1, 7);
+            title.Location = new Point(2, 2);
             title.BackColor = ColorTranslator.FromHtml("#202020");
             item.Controls.Add(title);
             title.Visible = false;
@@ -159,14 +204,16 @@ namespace SuperSharpShop
             item.MouseLeave += new EventHandler(removeCard);
             titles.Add(title);
             PictureBox pb = new PictureBox();
-            pb.Size = new Size(item.Size.Width - 3, item.Size.Height - 100);
-            pb.Location = new Point(1, 7);
+            pb.Name = image;
+            pb.Size = new Size(item.Size.Width - 4, item.Size.Height - 100);
+            pb.Location = new Point(2, 2);
             pb.BackgroundImage = Image.FromFile(image);
             pb.BackgroundImageLayout = ImageLayout.Stretch;
+            pb.Click += new EventHandler(clickItem);
             item.Controls.Add(pb);
             Label priceCard = new Label();
-            priceCard.Name = $"${price}";
-            priceCard.Text = $"${price}";
+            priceCard.Name = $"{price}";
+            priceCard.Text = $"{price}";
             priceCard.Size = new Size(50, 25);
             priceCard.TextAlign = ContentAlignment.MiddleCenter;
             priceCard.Location = new Point(item.Size.Width - (priceCard.Size.Width + 2), item.Size.Height - (priceCard.Size.Height + 2));
@@ -179,7 +226,7 @@ namespace SuperSharpShop
             descriptionCard.Text = description;
             descriptionCard.TextAlign = ContentAlignment.TopLeft;
             descriptionCard.Size = new Size(pb.Size.Width, item.Size.Height - (pb.Size.Height + pb.Location.Y));
-            descriptionCard.Location = new Point(pb.Location.X, pb.Size.Height + pb.Location.Y);
+            descriptionCard.Location = new Point(pb.Location.X, pb.Size.Height + pb.Location.Y - 2);
             descriptionCard.BackColor = ColorTranslator.FromHtml("#303030");
             item.Controls.Add(descriptionCard);
             Console.WriteLine($"{priceCard.Name}: X: {priceCard.Location.X}, Y: {priceCard.Location.Y}, Width: {priceCard.Size.Width}, Height: {priceCard.Size.Height}");
@@ -189,6 +236,30 @@ namespace SuperSharpShop
                 child.MouseLeave += new EventHandler(removeCardChild);
             }
             setPanelSize(panel);
+        }
+
+        public void search(object sender, EventArgs e)
+        {
+            Control control = this.Controls[1];
+            Panel panel = new Panel();
+            setPanel(panel,"Search" );
+            foreach (Control child in lastPanel.Controls)
+            {
+                Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
+                if (child.Name.ToLower().Contains(searchBar.Text.ToLower()))
+                {
+                    setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, child.Controls[1].Name);
+                }
+            }
+            if (this.Controls.Count > 1)
+            {
+                if (control.Name != "Search")
+                {
+                    lastPanel = control;
+                }
+                this.Controls.RemoveAt(1);
+            }
+            this.Controls.Add(panel);
         }
 
         #region Windows Form Designer generated code
@@ -219,17 +290,19 @@ namespace SuperSharpShop
             searchButton.Location = new Point(180, 50);
             searchButton.BackColor = ColorTranslator.FromHtml("#858585");
             searchButton.Font = new Font("Arial", 7);
+            searchButton.Click += new EventHandler(search);
             setPanel(storePanel, "Shop");
             setPanel(ownedPanel, "Library");
             setPanel(installedPanel, "Installed");
-            setPanelButton(storeButton, "Shop");
-            setPanelButton(ownedButton, "Library");
-            setPanelButton(installedButton, "Installed");
+            //setPanelButton(storeButton, "Shop");
+            //setPanelButton(ownedButton, "Library");
+            //setPanelButton(installedButton, "Installed");
             this.WindowState = FormWindowState.Maximized;
             //storePanel.BackColor = Color.Aqua;
             //ownedPanel.BackColor = Color.Gold;
             //installedPanel.BackColor = Color.Green;
             this.Controls.Add(storePanel);
+            this.lastPanel = storePanel;
         }
 
         #endregion
@@ -238,14 +311,15 @@ namespace SuperSharpShop
         public Panel storePanel = new System.Windows.Forms.Panel();
         public Panel ownedPanel = new System.Windows.Forms.Panel();
         public Panel installedPanel = new System.Windows.Forms.Panel();
-        public Button storeButton = new System.Windows.Forms.Button();
-        public Button ownedButton = new System.Windows.Forms.Button();
-        public Button installedButton = new System.Windows.Forms.Button();
+        //public Button storeButton = new System.Windows.Forms.Button();
+        //public Button ownedButton = new System.Windows.Forms.Button();
+        //public Button installedButton = new System.Windows.Forms.Button();
         public TextBox searchBar = new System.Windows.Forms.TextBox();
         public Button searchButton = new System.Windows.Forms.Button();
         public List<Panel> panels = new List<Panel>();
         public List<Label> titles = new List<Label>();
         public List<Label> priceCards = new List<Label>();
+        public Control lastPanel;
     }
 }
 

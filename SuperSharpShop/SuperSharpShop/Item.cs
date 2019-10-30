@@ -29,7 +29,7 @@ namespace SuperSharpShop
             } else {
                 panel = new Panel();
             }
-            Program.App.setItem(panel, new GroupBox(), Name, Description, Price, ImagePath);
+            Program.App.setItem(panel, new GroupBox(), Name, Description, $"${Price}", ImagePath);
         }
 
         public string Name
