@@ -49,6 +49,7 @@ namespace SuperSharpShop
                 this.Controls.RemoveAt(1);
             }
             this.Controls.Add(Panel1);
+            searchBar.Text = "";
         }
 
         public void setPanelButton(Button button, String name)
@@ -357,6 +358,34 @@ namespace SuperSharpShop
             }
             this.Controls.Add(panel);
         }
+        
+        public void searchClick(object sender, EventArgs e)
+        {
+            Control control = this.Controls[1];
+            Console.WriteLine(control.Text);
+            Panel panel = new Panel();
+            setPanel(panel,"Search" );
+            searchTitles.Clear();
+            searchPriceCards.Clear();
+            foreach (Control child in lastPanel.Controls)
+            {
+                //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
+                if (child.Name.ToLower().Contains(searchBar.Text.ToLower()))
+                {
+                    setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, child.Controls[1].Name);
+                }
+            }
+            if (this.Controls.Count > 1)
+            {
+                if (control.Name != "Search")
+                {
+                    lastPanel = control;
+                }
+                this.Controls.RemoveAt(1);
+            }
+            this.Controls.Add(panel);
+            searchBar.Text = "";
+        }
 
         #region Windows Form Designer generated code
 
@@ -380,6 +409,7 @@ namespace SuperSharpShop
             //searchBar.AppendText("Search...");
             searchBar.Location = new Point(20, 50);
             searchBar.Size = new Size(150, 21);
+            searchBar.TextChanged += new EventHandler(search);
             searchButton.Name = "Search";
             searchButton.Text = "Search";
             searchButton.Size = new Size(55, 21);
