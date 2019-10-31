@@ -16,6 +16,7 @@ namespace SuperSharpShop
     {
         public static Form1 App;
         public static MySqlConnection conn;
+        public static int userId = 1;
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -62,9 +63,33 @@ namespace SuperSharpShop
             reader = command.ExecuteReader();
             while (reader.Read())
             {
-                new Item(reader.GetValue(1).ToString(), reader.GetValue(2).ToString(), double.Parse(reader.GetValue(5).ToString()), reader.GetValue(4).ToString(), reader.GetValue(3).ToString(), reader.GetValue(6).ToString());
+                new Item(reader.GetValue(1).ToString(), reader.GetValue(2).ToString(), double.Parse(reader.GetValue(5).ToString()), reader.GetValue(4).ToString(), reader.GetValue(3).ToString(), "shop");
             }
             conn.Close();
+            conn.Open();
+            sql = $"SELECT item_ID FROM owned WHERE user_ID = {userId};";
+            command = new MySqlCommand(sql, conn);
+            reader = command.ExecuteReader();
+            List<String> owned = new List<string>();
+            while (reader.Read())
+            {
+                owned.Add(reader.GetValue(0).ToString());
+            }
+            conn.Close();
+            foreach (String item in owned)
+            {
+                conn.Open();
+                sql = $"SELECT * FROM items WHERE ID = '{item}';";
+                MySqlCommand newcommand = new MySqlCommand(sql, conn);
+                MySqlDataReader newreader = newcommand.ExecuteReader();
+                while (newreader.Read())
+                {
+                    new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
+                        double.Parse(newreader.GetValue(5).ToString()), newreader.GetValue(4).ToString(),
+                        newreader.GetValue(3).ToString(), "library");
+                }
+                conn.Close();
+            }
         }
     }
 }

@@ -28,7 +28,6 @@ namespace SuperSharpShop
         public void panelSwitch(object sender, EventArgs e)
         {
             Button button = (Button)sender;
-            Console.WriteLine(e);
             int index = 0;
             int count = 0;
             foreach (Panel panel in this.panels)
@@ -42,10 +41,10 @@ namespace SuperSharpShop
             Panel Panel1 = panels[index];
             if (this.Controls.Count > 1)
             {
-                if (this.Controls[1].Name != "Search")
+                if (Panel1.Name != "Search")
                 {
                     lastPanel = Panel1;
-                    Console.WriteLine(lastPanel.Name);
+                    Console.WriteLine(lastPanel.Text);
                 }
                 this.Controls.RemoveAt(1);
             }
@@ -66,7 +65,7 @@ namespace SuperSharpShop
             button.Size = new Size(200, 50);
             button.Name = name;
             button.Text = name;
-            Console.WriteLine($"{button.Name}: X: {button.Location.X}, Y: {button.Location.Y}, Text: {button.Text}");
+            //Console.WriteLine($"{button.Name}: X: {button.Location.X}, Y: {button.Location.Y}, Text: {button.Text}");
             button.Click += new EventHandler(panelSwitch);
         }
 
@@ -106,6 +105,7 @@ namespace SuperSharpShop
             panel.Name = name;
             panel.Text = name;
             List<String> list = new List<string>();
+            List<Label> titles = getTitlesList(panel);
             foreach (Label label in titles)
             {
                 list.Add(label.Text);
@@ -131,27 +131,44 @@ namespace SuperSharpShop
                 panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - 250, (panel.Controls.Count / 3) * 300);
             }
         }
+        
+        public void showCard(Label title, Label priceCard)
+        {
+            title.Visible = true;
+            if (lastPanel.Text == "Shop")
+            {
+                priceCard.Visible = true;
+            }
+        }
+
+        public void hideCard(Label title, Label priceCard)
+        {
+            title.Visible = false;
+            priceCard.Visible = false;
+        }
 
         public void setCard(object sender, EventArgs e)
         {
             GroupBox item = (GroupBox) sender;
             int index = item.Parent.Controls.IndexOf(item);
+            List<Label> titles = getTitlesList(item.Parent);
             Label title = titles[index];
+            List<Label> priceCards = getPriceCardList(item.Parent);
             Label priceCard = priceCards[index];
             //Console.WriteLine(item.Name + ", " + item.GetType() + " |\t" + title.Text + " |\t" + item.Controls.Contains(title));
-            title.Visible = true;
-            priceCard.Visible = true;
+            showCard(title, priceCard);
         }
 
         public void removeCard(object sender, EventArgs e)
         {
             GroupBox item = (GroupBox) sender;
             int index = item.Parent.Controls.IndexOf(item);
+            List<Label> titles = getTitlesList(item.Parent);
             Label title = titles[index];
+            List<Label> priceCards = getPriceCardList(item.Parent);
             Label priceCard = priceCards[index];
             //Console.WriteLine(item.Name + " |\t" + title.Text + " |\t" + item.Controls.Contains(title));
-            title.Visible = false;
-            priceCard.Visible = false;
+            hideCard(title, priceCard);
         }
         
         public void setCardChild(object sender, EventArgs e)
@@ -159,22 +176,95 @@ namespace SuperSharpShop
             Control child = (Control) sender;
             Control item = child.Parent;
             int index = item.Parent.Controls.IndexOf(item);
+            List<Label> titles = getTitlesList(item.Parent);
             Label title = titles[index];
+            List<Label> priceCards = getPriceCardList(item.Parent);
             Label priceCard = priceCards[index];
-            //Console.WriteLine(item.Name + ", " + item.GetType() + " |\t" + title.Text + " |\t" + item.Controls.Contains(title));
-            title.Visible = true;
-            priceCard.Visible = true;
+            Console.WriteLine(item.Name + ", " + item.GetType() + " |\t" + title.Text + " |\t" + item.Controls.Contains(title));
+            showCard(title, priceCard);
         }
+        
 
         public void removeCardChild(object sender, EventArgs e)
         {
             Control child = (Control) sender;
             Control item = child.Parent;
             int index = item.Parent.Controls.IndexOf(item);
+            List<Label> titles = getTitlesList(item.Parent);
             Label title = titles[index];
+            List<Label> priceCards = getPriceCardList(item.Parent);
             Label priceCard = priceCards[index];
-            title.Visible = false;
-            priceCard.Visible = false;
+            hideCard(title, priceCard);
+        }
+
+        public void setTitleList(Panel panel, Label title)
+        {
+            if (panel.Text == "Shop")
+            {
+                storeTitles.Add(title);
+            } else if (panel.Text == "Library")
+            {
+                libraryTitles.Add(title);
+            } else if (panel.Text == "Installed")
+            {
+                installedTitles.Add(title);
+            } else if (panel.Text == "Search")
+            {
+                searchTitles.Add(title);
+            }
+        }
+
+        public List<Label> getTitlesList(Control panel)
+        {
+            if (panel.Text == "Shop")
+            {
+                return storeTitles;
+            } else if (panel.Text == "Library")
+            {
+                return libraryTitles;
+            } else if (panel.Text == "Installed")
+            {
+                return installedTitles;
+            }else if (panel.Text == "Search")
+            {
+                return searchTitles;
+            }
+            return new List<Label>();
+        }
+        
+        public void setPriceCardList(Panel panel, Label priceCard)
+        {
+            if (panel.Text == "Shop")
+            {
+                storePriceCards.Add(priceCard);
+            } else if (panel.Text == "Library")
+            {
+                libraryPriceCards.Add(priceCard);
+            } else if (panel.Text == "Installed")
+            {
+                installedPriceCards.Add(priceCard);
+            } else if (panel.Text == "Search")
+            {
+                searchPriceCards.Add(priceCard);
+            }
+        }
+
+        public List<Label> getPriceCardList(Control panel)
+        {
+            if (panel.Text == "Shop")
+            {
+                return storePriceCards;
+            } else if (panel.Text == "Library")
+            {
+                return libraryPriceCards;
+            } else if (panel.Text == "Installed")
+            {
+                return installedPriceCards;
+            }else if (panel.Text == "Search")
+            {
+                return searchPriceCards;
+            }
+            return new List<Label>();
         }
         
         
@@ -191,7 +281,7 @@ namespace SuperSharpShop
             item.ResumeLayout(false);
             item.PerformLayout();
             item.FlatStyle = FlatStyle.Flat;
-            Console.WriteLine($"{item.Name}: X: {item.Location.X}, Y: {item.Location.Y}, Width: {item.Size.Width}, Height: {item.Size.Height}");
+            //Console.WriteLine($"{item.Name}: X: {item.Location.X}, Y: {item.Location.Y}, Width: {item.Size.Width}, Height: {item.Size.Height}");
             Label title = new Label();
             title.Text = name;
             title.Size = new Size(200, 25);
@@ -202,7 +292,7 @@ namespace SuperSharpShop
             title.Visible = false;
             item.MouseEnter += new EventHandler(setCard);
             item.MouseLeave += new EventHandler(removeCard);
-            titles.Add(title);
+            setTitleList(panel, title);
             PictureBox pb = new PictureBox();
             pb.Name = image;
             pb.Size = new Size(item.Size.Width - 4, item.Size.Height - 100);
@@ -219,7 +309,7 @@ namespace SuperSharpShop
             priceCard.Location = new Point(item.Size.Width - (priceCard.Size.Width + 2), item.Size.Height - (priceCard.Size.Height + 2));
             priceCard.BackColor = ColorTranslator.FromHtml("#202020");
             priceCard.Visible = false;
-            priceCards.Add(priceCard);
+            setPriceCardList(panel, priceCard);
             item.Controls.Add(priceCard);
             Label descriptionCard = new Label();
             descriptionCard.Name = name;
@@ -229,9 +319,10 @@ namespace SuperSharpShop
             descriptionCard.Location = new Point(pb.Location.X, pb.Size.Height + pb.Location.Y - 2);
             descriptionCard.BackColor = ColorTranslator.FromHtml("#303030");
             item.Controls.Add(descriptionCard);
-            Console.WriteLine($"{priceCard.Name}: X: {priceCard.Location.X}, Y: {priceCard.Location.Y}, Width: {priceCard.Size.Width}, Height: {priceCard.Size.Height}");
+            //Console.WriteLine($"{priceCard.Name}: X: {priceCard.Location.X}, Y: {priceCard.Location.Y}, Width: {priceCard.Size.Width}, Height: {priceCard.Size.Height}");
             foreach (Control child in item.Controls)
             {
+                Console.WriteLine($"{panel.Text}: {item.Name}");
                 child.MouseEnter += new EventHandler(setCardChild);
                 child.MouseLeave += new EventHandler(removeCardChild);
             }
@@ -241,11 +332,14 @@ namespace SuperSharpShop
         public void search(object sender, EventArgs e)
         {
             Control control = this.Controls[1];
+            Console.WriteLine(control.Text);
             Panel panel = new Panel();
             setPanel(panel,"Search" );
+            searchTitles.Clear();
+            searchPriceCards.Clear();
             foreach (Control child in lastPanel.Controls)
             {
-                Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
+                //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
                 if (child.Name.ToLower().Contains(searchBar.Text.ToLower()))
                 {
                     setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, child.Controls[1].Name);
@@ -317,8 +411,14 @@ namespace SuperSharpShop
         public TextBox searchBar = new System.Windows.Forms.TextBox();
         public Button searchButton = new System.Windows.Forms.Button();
         public List<Panel> panels = new List<Panel>();
-        public List<Label> titles = new List<Label>();
-        public List<Label> priceCards = new List<Label>();
+        public List<Label> storeTitles = new List<Label>();
+        public List<Label> libraryTitles = new List<Label>();
+        public List<Label> installedTitles = new List<Label>();
+        public List<Label> searchTitles = new List<Label>();
+        public List<Label> storePriceCards = new List<Label>();
+        public List<Label> libraryPriceCards = new List<Label>();
+        public List<Label> installedPriceCards = new List<Label>();
+        public List<Label> searchPriceCards = new List<Label>();
         public Control lastPanel;
     }
 }
