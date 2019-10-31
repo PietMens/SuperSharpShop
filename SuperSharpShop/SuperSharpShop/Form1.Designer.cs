@@ -77,7 +77,7 @@ namespace SuperSharpShop
             setPanel(panel, control.Name);
             if (this.Controls.Count > 1)
             {
-                if (control.Name != "Search")
+                if (control.Parent.Text != "Search")
                 {
                     lastPanel = control;
                 }
@@ -105,10 +105,12 @@ namespace SuperSharpShop
             panel.Name = name;
             panel.Text = name;
             List<String> list = new List<string>();
-            List<Label> titles = getTitlesList(panel);
-            foreach (Label label in titles)
+            foreach (List<Label> title in titles)
             {
-                list.Add(label.Text);
+                foreach (Label label in title)
+                {
+                    list.Add(label.Text);
+                }
             }
             if (name != "Search" && !list.Contains(name))
             {
@@ -397,6 +399,10 @@ namespace SuperSharpShop
             //installedPanel.BackColor = Color.Green;
             this.Controls.Add(storePanel);
             this.lastPanel = storePanel;
+            titles.Add(storeTitles);
+            titles.Add(libraryTitles);
+            titles.Add(installedTitles);
+            titles.Add(searchTitles);
         }
 
         #endregion
@@ -415,6 +421,7 @@ namespace SuperSharpShop
         public List<Label> libraryTitles = new List<Label>();
         public List<Label> installedTitles = new List<Label>();
         public List<Label> searchTitles = new List<Label>();
+        public List<List<Label>> titles = new List<List<Label>>();
         public List<Label> storePriceCards = new List<Label>();
         public List<Label> libraryPriceCards = new List<Label>();
         public List<Label> installedPriceCards = new List<Label>();
