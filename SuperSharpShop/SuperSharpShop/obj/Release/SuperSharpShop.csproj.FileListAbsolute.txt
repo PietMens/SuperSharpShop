@@ -1,0 +1,8 @@
+/home/rico/Documents/C#/SuperSharpShop/SuperSharpShop/SuperSharpShop/bin/Release/SuperSharpShop.exe.config
+/home/rico/Documents/C#/SuperSharpShop/SuperSharpShop/SuperSharpShop/bin/Release/SuperSharpShop.exe
+/home/rico/Documents/C#/SuperSharpShop/SuperSharpShop/SuperSharpShop/bin/Release/SuperSharpShop.pdb
+/home/rico/Documents/C#/SuperSharpShop/SuperSharpShop/SuperSharpShop/obj/Release/SuperSharpShop.csprojAssemblyReference.cache
+/home/rico/Documents/C#/SuperSharpShop/SuperSharpShop/SuperSharpShop/obj/Release/SuperSharpShop.Properties.Resources.resources
+/home/rico/Documents/C#/SuperSharpShop/SuperSharpShop/SuperSharpShop/obj/Release/SuperSharpShop.csproj.GenerateResource.cache
+/home/rico/Documents/C#/SuperSharpShop/SuperSharpShop/SuperSharpShop/obj/Release/SuperSharpShop.exe
+/home/rico/Documents/C#/SuperSharpShop/SuperSharpShop/SuperSharpShop/obj/Release/SuperSharpShop.pdb

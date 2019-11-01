@@ -32,6 +32,8 @@ namespace SuperSharpShop
         public void panelSwitch(object sender, EventArgs e)
         {
             Button button = (Button)sender;
+            list.Controls.Clear();
+            list.Visible = false;
             int index = 0;
             int count = 0;
             foreach (Panel panel in this.panels)
@@ -106,6 +108,42 @@ namespace SuperSharpShop
             pictureBox.Location = new Point(100, 50);
             pictureBox.Size = new Size(panel.Size.Width - pictureBox.Location.X * 2, 400);
             pictureBox.BackgroundImage = pb.BackgroundImage;
+            pictureBox.BackgroundImageLayout = ImageLayout.Stretch;
+            panel.Controls.Add(pictureBox);
+        }
+        
+        public void clickItemList(object sender, EventArgs e)
+        {
+            this.list.Controls.Clear();
+            this.list.Visible = false;
+            searchBar.Text = "";
+            Button button = (Button) sender;
+            Control control = this.Controls[2];
+            Control item = null;
+            foreach (Control c in control.Controls)
+            {
+                if (c.Name == button.Text)
+                {
+                    item = c;
+                }
+            }
+            Panel panel = new Panel();
+            setPanel(panel, control.Name);
+            if (this.Controls.Count > 2)
+            {
+                if (control.Parent.Text != "Search")
+                {
+                    lastPanel = control;
+                }
+                this.Controls.RemoveAt(2);
+            }
+            this.Controls.Add(panel);
+            PictureBox pictureBox = new PictureBox();
+            pictureBox.BorderStyle = BorderStyle.Fixed3D;
+            pictureBox.Name = button.Name;
+            pictureBox.Location = new Point(100, 50);
+            pictureBox.Size = new Size(panel.Size.Width - pictureBox.Location.X * 2, 400);
+            pictureBox.BackgroundImage = item.Controls[1].BackgroundImage;
             pictureBox.BackgroundImageLayout = ImageLayout.Stretch;
             panel.Controls.Add(pictureBox);
         }
@@ -379,18 +417,34 @@ namespace SuperSharpShop
             //Console.WriteLine(control.Text);
             Panel panel = new Panel();
             setPanel(panel,"Search" );
+            list.Controls.Clear();
+            if (searchBar.Text.Trim() != "")
+            {
+                list.Visible = true;
+            }
+            else
+            {
+                list.Visible = false;
+            }
+            list.Size = new Size(searchBar.Size.Width, 0);
+            list.Location = new Point(searchBar.Location.X, searchBar.Location.Y + searchBar.Size.Height);
             userButton.Visible = true;
             searchTitles.Clear();
             searchPriceCards.Clear();
             foreach (Control child in lastPanel.Controls)
             {
                 bool check = false;
+                int index = 0;
+                int i = 0;
+                
                 foreach (String word in child.Name.Split())
                 {
                     if (word.ToLower().StartsWith(searchBar.Text.ToLower()))
                     {
                         check = true;
+                        index = i;
                     }
+                    i++;
                 }
                 //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
                 if (check)
@@ -399,7 +453,21 @@ namespace SuperSharpShop
                     Image imageIn = child.Controls[1].BackgroundImage;
                     imageIn.Save(ms,imageIn.RawFormat);
                     setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, ms.ToArray());
+                    Button button = new Button();
+                    button.Text = child.Name;
+                    button.FlatAppearance.BorderSize = 0;
+                    button.FlatStyle = FlatStyle.Flat;
+                    button.Size = new Size(list.Size.Width, 30);
+                    list.Controls.Add(button);
+                    list.Size = new Size(list.Size.Width, button.Size.Height * (list.Controls.IndexOf(button) + 1) + button.Size.Height / 2);
+                    button.Location = new Point(0, button.Size.Height * list.Controls.IndexOf(button));
+                    Console.WriteLine("Button: "+ list.Controls.IndexOf(button));
+                    button.Click += new EventHandler(clickItemList);
                 }
+            }
+            if (list.Controls.Count < 1)
+            {
+                list.Visible = false;
             }
             Console.WriteLine(this.Controls.Count);
             Console.WriteLine(this.Controls[2].Text);
@@ -420,6 +488,8 @@ namespace SuperSharpShop
             //Console.WriteLine(control.Text);
             Panel panel = new Panel();
             setPanel(panel,"Search" );
+            list.Controls.Clear();
+            list.Visible = false;
             userButton.Visible = true;
             searchTitles.Clear();
             searchPriceCards.Clear();
@@ -536,6 +606,9 @@ namespace SuperSharpShop
             //this.Menu = new MainMenu();
             this.panel.Controls.Add(searchBar);
             this.panel.Controls.Add(searchButton);
+            this.panel.Controls.Add(list);
+            list.Visible = false;
+            list.BackColor = Color.Azure;
             //searchBar.AppendText("Search...");
             searchBar.Location = new Point(20, 100);
             searchBar.Size = new Size(150, 21);
@@ -607,6 +680,7 @@ namespace SuperSharpShop
         public Panel menu = new Panel();
         public Panel profilePanel = new Panel();
         public ItemForm itemForm;
+        public ListBox list = new ListBox();
     }
 }
 
