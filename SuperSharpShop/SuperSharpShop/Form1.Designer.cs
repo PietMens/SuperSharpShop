@@ -66,8 +66,8 @@ namespace SuperSharpShop
             button.FlatAppearance.BorderColor = button.BackColor;
             button.FlatStyle = FlatStyle.Flat;
             
-            button.Location = new Point(25, panel.Controls.IndexOf(button) * 40 + 20 * panel.Controls.IndexOf(button));
-            button.Size = new Size(200, 50);
+            button.Location = new Point(0, panel.Controls.IndexOf(button) * 40 + 10 * panel.Controls.IndexOf(button));
+            button.Size = new Size(250, 50);
             button.Name = name;
             button.Text = name;
             //Console.WriteLine($"{button.Name}: X: {button.Location.X}, Y: {button.Location.Y}, Text: {button.Text}");
@@ -105,7 +105,7 @@ namespace SuperSharpShop
             panel.BackColor = this.BackColor;
             panel.ForeColor = Color.Honeydew;
             panel.Location = new Point(250, menu.Size.Height);
-            //setPanelSize(panel);
+            setPanelSize(panel);
             panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - 250, Screen.PrimaryScreen.Bounds.Height);
             panel.Name = name;
             panel.Text = name;
@@ -333,7 +333,7 @@ namespace SuperSharpShop
                 child.MouseEnter += new EventHandler(setCardChild);
                 child.MouseLeave += new EventHandler(removeCardChild);
             }
-            //setPanelSize(panel);
+            setPanelSize(panel);
         }
 
         public void search(object sender, EventArgs e)
@@ -346,10 +346,21 @@ namespace SuperSharpShop
             searchPriceCards.Clear();
             foreach (Control child in lastPanel.Controls)
             {
-                //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
-                if (child.Name.ToLower().Contains(searchBar.Text.ToLower()))
+                bool check = false;
+                foreach (String word in child.Name.Split())
                 {
-                    setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, Encoding.ASCII.GetBytes(child.Controls[1].Name));
+                    if (word.ToLower().StartsWith(searchBar.Text.ToLower()))
+                    {
+                        check = true;
+                    }
+                }
+                //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
+                if (check)
+                {
+                    MemoryStream ms = new MemoryStream();
+                    Image imageIn = child.Controls[1].BackgroundImage;
+                    imageIn.Save(ms,imageIn.RawFormat);
+                    setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, ms.ToArray());
                 }
             }
             Console.WriteLine(this.Controls.Count);
@@ -367,19 +378,31 @@ namespace SuperSharpShop
         public void searchClick(object sender, EventArgs e)
         {
             Control control = this.Controls[2];
-            Console.WriteLine(control.Text);
+            //Console.WriteLine(control.Text);
             Panel panel = new Panel();
             setPanel(panel,"Search" );
             searchTitles.Clear();
             searchPriceCards.Clear();
             foreach (Control child in lastPanel.Controls)
             {
-                //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
-                if (child.Name.ToLower().Contains(searchBar.Text.ToLower()))
+                bool check = false;
+                foreach (String word in child.Name.Split())
                 {
-                    setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, Encoding.ASCII.GetBytes(child.Controls[1].Name));
+                    if (word.ToLower().StartsWith(searchBar.Text.ToLower()))
+                    {
+                        check = true;
+                    }
+                }
+                //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
+                if (check)
+                {
+                    MemoryStream ms = new MemoryStream();
+                    Image imageIn = child.Controls[1].BackgroundImage;
+                    imageIn.Save(ms,imageIn.RawFormat);
+                    setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, ms.ToArray());
                 }
             }
+            Console.WriteLine(this.Controls.Count);
             if (this.Controls.Count > 2)
             {
                 if (control.Name != "Search")
@@ -431,6 +454,11 @@ namespace SuperSharpShop
             }
         }
 
+        public void setFooter(Panel parent, Panel panel)
+        {
+            
+        }
+        
         public void addItem(object sender, EventArgs e)
         {
             if (itemForm == null)
@@ -460,7 +488,8 @@ namespace SuperSharpShop
             setMenu(menu, "menu");
             this.Controls.Add(menu);
             this.Controls.Add(panel);
-            this.panel.Size = new Size(250, Screen.PrimaryScreen.Bounds.Height);
+            this.panel.Size = new Size(250, Screen.PrimaryScreen.Bounds.Height - menu.Size.Height);
+            this.panel.Location = new Point(0, menu.Size.Height);
             this.panel.BackColor = ColorTranslator.FromHtml("#454545");
             //this.Menu = new MainMenu();
             this.panel.Controls.Add(searchBar);
