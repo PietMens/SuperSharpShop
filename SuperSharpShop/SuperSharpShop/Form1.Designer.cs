@@ -126,6 +126,13 @@ namespace SuperSharpShop
             panel.AutoScroll = true;
             panel.AutoScrollPosition = new Point(Screen.PrimaryScreen.Bounds.Width - 100, 0);
             panel.AutoScrollMinSize = new Size(10, Screen.PrimaryScreen.Bounds.Height);
+            panel.MouseEnter += new EventHandler(Scrolling);
+        }
+
+        public void Scrolling(object sender, EventArgs e)
+        {
+            Panel panel = (Panel) sender;
+            panel.Focus();
         }
 
         public void setPanelSize(Control panel)
