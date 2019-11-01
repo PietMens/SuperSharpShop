@@ -140,6 +140,7 @@ namespace SuperSharpShop
                 param.Value = photo;
                 command.ExecuteNonQuery();
                 Program.conn.Close();
+                Program.setItems();
                 this.Close();
             }
         }

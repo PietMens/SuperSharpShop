@@ -36,8 +36,10 @@ namespace SuperSharpShop
             int count = 0;
             foreach (Panel panel in this.panels)
             {
+                Console.WriteLine(panel.Name + " | " + button.Name);
                 if (panel.Name == button.Name)
                 {
+                    Console.WriteLine(panel.Name + " | " + button.Name);
                     index = count;
                 }
                 count = count + 1;
@@ -52,7 +54,16 @@ namespace SuperSharpShop
                 }
                 this.Controls.RemoveAt(2);
             }
-            this.Controls.Add(Panel1); 
+            this.Controls.Add(Panel1);
+            if (Panel1 == profilePanel)
+            {
+                userButton.Visible = false;
+            }
+            else
+            {
+                userButton.Visible = true;
+            }
+            Program.setItems();
             searchBar.Text = "";
         }
 
@@ -117,12 +128,15 @@ namespace SuperSharpShop
                     list.Add(label.Text);
                 }
             }
-            if (name != "Search" && !list.Contains(name))
+            if (name != "Search" && !list.Contains(name) && name != Program.user.Name)
             {
                 setPanelButton(new Button(), name);
+            } else if (name == Program.user.Name)
+            {
+                setProfile();
             }
-            panel.VerticalScroll.Visible = true;
-            panel.VerticalScroll.Enabled = true;
+            //panel.VerticalScroll.Visible = true;
+            //panel.VerticalScroll.Enabled = true;
             panel.AutoScroll = true;
             panel.AutoScrollPosition = new Point(Screen.PrimaryScreen.Bounds.Width - 100, 0);
             panel.AutoScrollMinSize = new Size(10, Screen.PrimaryScreen.Bounds.Height);
@@ -279,7 +293,30 @@ namespace SuperSharpShop
             }
             return new List<Label>();
         }
-        
+
+        public void setProfile()
+        {
+            Label username = new Label();
+            username.Location = new Point(25, 25);
+            username.Size = new Size(200, 50);
+            username.Text = profilePanel.Name;
+            username.TextAlign = ContentAlignment.MiddleCenter;
+            username.BackColor = ColorTranslator.FromHtml("#454545");
+            username.Font = new Font("Arial", 20, FontStyle.Bold);
+            profilePanel.Controls.Add(username);
+        }
+
+        public void setCardEvents(GroupBox item)
+        {
+            item.MouseEnter += new EventHandler(setCard);
+            item.MouseLeave += new EventHandler(removeCard);
+            foreach (Control child in item.Controls)
+            {
+                Console.WriteLine($"{item.Parent.Text}: {item.Name}");
+                child.MouseEnter += new EventHandler(setCardChild);
+                child.MouseLeave += new EventHandler(removeCardChild);
+            }
+        }
         
 
         public void setItem(Panel panel, GroupBox item, String name, String description, String price, byte[] image)
@@ -303,8 +340,6 @@ namespace SuperSharpShop
             title.BackColor = ColorTranslator.FromHtml("#202020");
             item.Controls.Add(title);
             title.Visible = false;
-            item.MouseEnter += new EventHandler(setCard);
-            item.MouseLeave += new EventHandler(removeCard);
             setTitleList(panel, title);
             PictureBox pb = new PictureBox();
             pb.Name = image.ToString();
@@ -334,12 +369,7 @@ namespace SuperSharpShop
             descriptionCard.BackColor = ColorTranslator.FromHtml("#303030");
             item.Controls.Add(descriptionCard);
             //Console.WriteLine($"{priceCard.Name}: X: {priceCard.Location.X}, Y: {priceCard.Location.Y}, Width: {priceCard.Size.Width}, Height: {priceCard.Size.Height}");
-            foreach (Control child in item.Controls)
-            {
-                //Console.WriteLine($"{panel.Text}: {item.Name}");
-                child.MouseEnter += new EventHandler(setCardChild);
-                child.MouseLeave += new EventHandler(removeCardChild);
-            }
+            setCardEvents(item);
             setPanelSize(panel);
         }
 
@@ -349,6 +379,7 @@ namespace SuperSharpShop
             //Console.WriteLine(control.Text);
             Panel panel = new Panel();
             setPanel(panel,"Search" );
+            userButton.Visible = true;
             searchTitles.Clear();
             searchPriceCards.Clear();
             foreach (Control child in lastPanel.Controls)
@@ -371,6 +402,7 @@ namespace SuperSharpShop
                 }
             }
             Console.WriteLine(this.Controls.Count);
+            Console.WriteLine(this.Controls[2].Text);
             if (this.Controls.Count > 2)
             {
                 if (control.Name != "Search")
@@ -388,6 +420,7 @@ namespace SuperSharpShop
             //Console.WriteLine(control.Text);
             Panel panel = new Panel();
             setPanel(panel,"Search" );
+            userButton.Visible = true;
             searchTitles.Clear();
             searchPriceCards.Clear();
             foreach (Control child in lastPanel.Controls)
@@ -434,6 +467,7 @@ namespace SuperSharpShop
             menu.Size = new Size(Screen.PrimaryScreen.Bounds.Width, 35);
             Label label = new Label();
             label.Text = "SuperSharpShop";
+            label.Font = new Font("Arial", 9, FontStyle.Bold);
             label.TextAlign = ContentAlignment.MiddleCenter;
             menu.Controls.Add(label);
             Button button = new Button();
@@ -498,18 +532,29 @@ namespace SuperSharpShop
             this.panel.Size = new Size(250, Screen.PrimaryScreen.Bounds.Height - menu.Size.Height);
             this.panel.Location = new Point(0, menu.Size.Height);
             this.panel.BackColor = ColorTranslator.FromHtml("#454545");
+            this.panel.Controls.Add(userButton);
             //this.Menu = new MainMenu();
             this.panel.Controls.Add(searchBar);
             this.panel.Controls.Add(searchButton);
             //searchBar.AppendText("Search...");
-            searchBar.Location = new Point(20, 50);
+            searchBar.Location = new Point(20, 100);
             searchBar.Size = new Size(150, 21);
+            setPanel(profilePanel, Program.user.Name);
+            userButton.Name = Program.user.Name;
+            userButton.Text = Program.user.Name;
+            userButton.FlatAppearance.BorderSize = 0;
+            userButton.FlatStyle = FlatStyle.Flat;
+            userButton.Size = new Size(250, 50);
+            userButton.Location = new Point(0, 25);
+            userButton.ForeColor = Color.Honeydew;
+            userButton.Font = new Font("Arial", 15);
+            userButton.Click += new EventHandler(panelSwitch);
             searchBar.TextChanged += new EventHandler(search);
             searchBar.BorderStyle = BorderStyle.FixedSingle;
             searchButton.Name = "Search";
             searchButton.Text = "Search";
             searchButton.Size = new Size(55, 21);
-            searchButton.Location = new Point(180, 50);
+            searchButton.Location = new Point(180, 100);
             searchButton.BackColor = ColorTranslator.FromHtml("#858585");
             searchButton.Font = new Font("Arial", 7);
             searchButton.Click += new EventHandler(searchClick);
@@ -529,6 +574,10 @@ namespace SuperSharpShop
             titles.Add(libraryTitles);
             titles.Add(installedTitles);
             titles.Add(searchTitles);
+            priceCards.Add(storePriceCards);
+            priceCards.Add(libraryPriceCards);
+            priceCards.Add(installedPriceCards);
+            priceCards.Add(searchPriceCards);
         }
 
         #endregion
@@ -542,6 +591,7 @@ namespace SuperSharpShop
         //public Button installedButton = new System.Windows.Forms.Button();
         public TextBox searchBar = new System.Windows.Forms.TextBox();
         public Button searchButton = new System.Windows.Forms.Button();
+        public Button userButton = new System.Windows.Forms.Button();
         public List<Panel> panels = new List<Panel>();
         public List<Label> storeTitles = new List<Label>();
         public List<Label> libraryTitles = new List<Label>();
@@ -552,8 +602,10 @@ namespace SuperSharpShop
         public List<Label> libraryPriceCards = new List<Label>();
         public List<Label> installedPriceCards = new List<Label>();
         public List<Label> searchPriceCards = new List<Label>();
+        public List<List<Label>> priceCards = new List<List<Label>>();
         public Control lastPanel;
         public Panel menu = new Panel();
+        public Panel profilePanel = new Panel();
         public ItemForm itemForm;
     }
 }

@@ -22,18 +22,20 @@ namespace SuperSharpShop
         public static Form1 App;
         public static MySqlConnection conn;
         public static int userId = 1;
+        public static User user;
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            App = new Form1();
             try
             {
                 setConnection();
+                getUser();
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                App = new Form1();
                 //Item Skyrim = new Item("Elder Scrolls V: Skyrim", "Game", 59.99, "../../IMG/skyrim.jpg", "The Elder Scrolls V: Skyrim is an action role-playing game, playable from either a first or third-person perspective. The player may freely roam over the land of Skyrim which is an open world environment consisting of wilderness expanses, dungeons, cities, towns, fortresses, and villages.", "shop");
                 //Item BattlefieldV = new Item("Star Wars Battlefront II", "Game", 59.99, "../../IMG/starwarsbattlefront.jpg", "Star Wars Battlefront II features a single-player story mode, a customizable character class system, and content based on The Force Awakens and The Last Jedi movies. It also features vehicles and locations from the original, prequel, and sequel Star Wars movie trilogies.", "shop");
                 //Item GTAV = new Item("Grand Theft Auto V", "Game", 59.99, "../../IMG/gtaV.jpg", "Grand Theft Auto V is an action-adventure game played from either a third-person or first-person perspective. Players complete missions—linear scenarios with set objectives—to progress through the story. Outside of the missions, players may freely roam the open world.", "shop");
@@ -53,6 +55,20 @@ namespace SuperSharpShop
             }
         }
 
+        public static void getUser()
+        {
+            conn.Open();
+            String sql = $"SELECT * FROM users WHERE ID = {userId};";
+            MySqlDataReader reader;
+            MySqlCommand command = new MySqlCommand(sql, conn);
+            reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                user = new User(int.Parse(reader["ID"].ToString()), reader["username"].ToString(), reader["email"].ToString());
+            }
+            conn.Close();
+        }
+
         public static void setConnection()
         {
             String connectionString = "SERVER=localhost;DATABASE=SuperSharpShop;UID=root;PASSWORD=;";
@@ -61,6 +77,14 @@ namespace SuperSharpShop
 
         public static void setItems()
         {
+            foreach (List<Label> labels in App.titles)
+            {
+                labels.Clear();
+            }
+            foreach (List<Label> labels in App.priceCards)
+            {
+                labels.Clear();
+            }
             App.storePanel.Controls.Clear();
             App.ownedPanel.Controls.Clear();
             App.installedPanel.Controls.Clear();
@@ -76,11 +100,6 @@ namespace SuperSharpShop
             foreach (DataRow row in ds.Tables["items"].Rows)
             {
                 new Item(row[1].ToString(), row[2].ToString(), double.Parse(row[5].ToString()), (byte[])row[4], row[3].ToString(), "shop");
-            }
-            reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                
             }
             conn.Close();
             conn.Open();
