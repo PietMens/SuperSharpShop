@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Data.Common;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Security;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data;
@@ -56,14 +61,26 @@ namespace SuperSharpShop
 
         public static void setItems()
         {
+            App.storePanel.Controls.Clear();
+            App.ownedPanel.Controls.Clear();
+            App.installedPanel.Controls.Clear();
             conn.Open();
             String sql = "SELECT * FROM items;";
             MySqlDataReader reader;
             MySqlCommand command = new MySqlCommand(sql, conn);
+            var da = new MySqlDataAdapter(command);
+            var ds = new DataSet();
+            da.Fill(ds, "items");
+            //int c = ds.Tables["image"].Rows.Count;
+            Console.WriteLine(ds.Tables.Count);
+            foreach (DataRow row in ds.Tables["items"].Rows)
+            {
+                new Item(row[1].ToString(), row[2].ToString(), double.Parse(row[5].ToString()), (byte[])row[4], row[3].ToString(), "shop");
+            }
             reader = command.ExecuteReader();
             while (reader.Read())
             {
-                new Item(reader.GetValue(1).ToString(), reader.GetValue(2).ToString(), double.Parse(reader.GetValue(5).ToString()), reader.GetValue(4).ToString(), reader.GetValue(3).ToString(), "shop");
+                
             }
             conn.Close();
             conn.Open();
@@ -85,8 +102,9 @@ namespace SuperSharpShop
                 while (newreader.Read())
                 {
                     new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
-                        double.Parse(newreader.GetValue(5).ToString()), newreader.GetValue(4).ToString(),
+                        double.Parse(newreader.GetValue(5).ToString()),(byte[])newreader.GetValue(4),
                         newreader.GetValue(3).ToString(), "library");
+                    
                 }
                 conn.Close();
             }

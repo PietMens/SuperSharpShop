@@ -8,15 +8,15 @@ namespace SuperSharpShop
         private String name;
         private String type;
         private double price;
-        private String imagePath;
+        private byte[] image;
         private String description;
 
-        public Item(String name, String type, double price, String imagePath, String description, String where)
+        public Item(String name, String type, double price, byte[] image, String description, String where)
         {
             Name = name;
             Type = type;
             Price = price;
-            ImagePath = imagePath;
+            Image = this.image;
             Description = description;
             Panel panel;
             if (where.ToLower() == "shop") {
@@ -29,7 +29,7 @@ namespace SuperSharpShop
             } else {
                 panel = new Panel();
             }
-            Program.App.setItem(panel, new GroupBox(), Name, Description, $"${Price}", ImagePath);
+            Program.App.setItem(panel, new GroupBox(), Name, Description, $"${Price}", image);
         }
 
         public string Name
@@ -50,10 +50,10 @@ namespace SuperSharpShop
             set => price = value;
         }
 
-        public string ImagePath
+        public byte[] Image
         {
-            get => imagePath;
-            set => imagePath = value;
+            get => image;
+            set => image = value;
         }
 
         public string Description
