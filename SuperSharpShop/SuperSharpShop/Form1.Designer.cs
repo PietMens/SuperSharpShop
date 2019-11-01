@@ -49,7 +49,7 @@ namespace SuperSharpShop
             Panel Panel1 = panels[index];
             if (this.Controls.Count > 2)
             {
-                if (Panel1.Name != "Search")
+                if (Panel1.Name != "Search" && Panel1.Name != "SearchClick")
                 {
                     lastPanel = Panel1;
                     Console.WriteLine(lastPanel.Text);
@@ -95,7 +95,7 @@ namespace SuperSharpShop
             setPanel(panel, control.Name);
             if (this.Controls.Count > 2)
             {
-                if (control.Parent.Text != "Search")
+                if (control.Parent.Text != "Search" && control.Parent.Text != "SearchClick")
                 {
                     lastPanel = control;
                 }
@@ -128,10 +128,10 @@ namespace SuperSharpShop
                 }
             }
             Panel panel = new Panel();
-            setPanel(panel, control.Name);
+            setPanel(panel, item.Name);
             if (this.Controls.Count > 2)
             {
-                if (control.Parent.Text != "Search")
+                if (control.Parent.Text != "Search" && control.Parent.Text != "SearchClick")
                 {
                     lastPanel = control;
                 }
@@ -166,7 +166,7 @@ namespace SuperSharpShop
                     list.Add(label.Text);
                 }
             }
-            if (name != "Search" && !list.Contains(name) && name != Program.user.Name)
+            if (name != "Search" && name != "SearchClick" && !list.Contains(name) && name != Program.user.Name)
             {
                 setPanelButton(new Button(), name);
             } else if (name == Program.user.Name)
@@ -273,7 +273,7 @@ namespace SuperSharpShop
             } else if (panel.Text == "Installed")
             {
                 installedTitles.Add(title);
-            } else if (panel.Text == "Search")
+            } else if (panel.Text == "Search" || panel.Text == "SearchClick")
             {
                 searchTitles.Add(title);
             }
@@ -290,7 +290,7 @@ namespace SuperSharpShop
             } else if (panel.Text == "Installed")
             {
                 return installedTitles;
-            }else if (panel.Text == "Search")
+            }else if (panel.Text == "Search" || panel.Text == "SearchClick")
             {
                 return searchTitles;
             }
@@ -308,7 +308,7 @@ namespace SuperSharpShop
             } else if (panel.Text == "Installed")
             {
                 installedPriceCards.Add(priceCard);
-            } else if (panel.Text == "Search")
+            } else if (panel.Text == "Search" || panel.Text == "SearchClick")
             {
                 searchPriceCards.Add(priceCard);
             }
@@ -325,7 +325,7 @@ namespace SuperSharpShop
             } else if (panel.Text == "Installed")
             {
                 return installedPriceCards;
-            }else if (panel.Text == "Search")
+            }else if (panel.Text == "Search" || panel.Text == "SearchClick")
             {
                 return searchPriceCards;
             }
@@ -350,7 +350,7 @@ namespace SuperSharpShop
             item.MouseLeave += new EventHandler(removeCard);
             foreach (Control child in item.Controls)
             {
-                Console.WriteLine($"{item.Parent.Text}: {item.Name}");
+                //Console.WriteLine($"{item.Parent.Text}: {item.Name}");
                 child.MouseEnter += new EventHandler(setCardChild);
                 child.MouseLeave += new EventHandler(removeCardChild);
             }
@@ -414,115 +414,148 @@ namespace SuperSharpShop
         public void search(object sender, EventArgs e)
         {
             Control control = this.Controls[2];
-            //Console.WriteLine(control.Text);
-            Panel panel = new Panel();
-            setPanel(panel,"Search" );
-            list.Controls.Clear();
-            if (searchBar.Text.Trim() != "")
-            {
+            if (searchBar.Text.Trim() != "") {
+                //Console.WriteLine(control.Text);
+                Panel panel = new Panel();
+                setPanel(panel,"Search" );
+                list.Controls.Clear();
                 list.Visible = true;
+                list.Size = new Size(searchBar.Size.Width, 0);
+                list.Location = new Point(searchBar.Location.X, searchBar.Location.Y + searchBar.Size.Height);
+                userButton.Visible = true;
+                searchTitles.Clear();
+                searchPriceCards.Clear();
+                foreach (Control child in lastPanel.Controls)
+                {
+                    bool check = false;
+                    int index = 0;
+                    int i = 0;
+                    
+                    foreach (String word in child.Name.Split())
+                    {
+                        if (word.ToLower().StartsWith(searchBar.Text.ToLower()))
+                        {
+                            check = true;
+                            index = i;
+                        }
+                        i++;
+                    }
+                    //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
+                    if (check)
+                    {
+                        MemoryStream ms = new MemoryStream();
+                        Image imageIn = child.Controls[1].BackgroundImage;
+                        imageIn.Save(ms,imageIn.RawFormat);
+                        setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, ms.ToArray());
+                        Button button = new Button();
+                        button.Text = child.Name;
+                        button.FlatAppearance.BorderSize = 0;
+                        button.FlatStyle = FlatStyle.Flat;
+                        button.Size = new Size(list.Size.Width, 30);
+                        list.Controls.Add(button);
+                        list.Size = new Size(list.Size.Width, button.Size.Height * (list.Controls.IndexOf(button) + 1) + button.Size.Height / 2);
+                        button.Location = new Point(0, button.Size.Height * list.Controls.IndexOf(button));
+                        Console.WriteLine("Button: "+ list.Controls.IndexOf(button));
+                        button.Click += new EventHandler(clickItemList);
+                    }
+                }
+                if (list.Controls.Count < 1)
+                {
+                    list.Visible = false;
+                }
+                Console.WriteLine(this.Controls.Count);
+                Console.WriteLine(this.Controls[2].Text);
+                if (this.Controls.Count > 2)
+                {
+                    if (control.Name != "Search")
+                    {
+                        lastPanel = control;
+                    }
+
+                    this.Controls.RemoveAt(2);
+                }
+                setPanelSize(panel);
+                this.Controls.Add(panel);
+                Console.WriteLine("Search Ended");
             }
             else
             {
                 list.Visible = false;
-            }
-            list.Size = new Size(searchBar.Size.Width, 0);
-            list.Location = new Point(searchBar.Location.X, searchBar.Location.Y + searchBar.Size.Height);
-            userButton.Visible = true;
-            searchTitles.Clear();
-            searchPriceCards.Clear();
-            foreach (Control child in lastPanel.Controls)
-            {
-                bool check = false;
-                int index = 0;
-                int i = 0;
-                
-                foreach (String word in child.Name.Split())
+                if (this.Controls.Count > 2)
                 {
-                    if (word.ToLower().StartsWith(searchBar.Text.ToLower()))
+                    if (control.Name != "Search" && control.Name != "SearchClick")
                     {
-                        check = true;
-                        index = i;
+                        lastPanel = control;
+                        this.Controls.RemoveAt(2);
+                        
                     }
-                    i++;
+                    else if (control.Name != "SearchClick")
+                    {
+                        this.Controls.RemoveAt(2);
+                    }
                 }
-                //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
-                if (check)
+                if (control.Name != "SearchClick")
                 {
-                    MemoryStream ms = new MemoryStream();
-                    Image imageIn = child.Controls[1].BackgroundImage;
-                    imageIn.Save(ms,imageIn.RawFormat);
-                    setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, ms.ToArray());
-                    Button button = new Button();
-                    button.Text = child.Name;
-                    button.FlatAppearance.BorderSize = 0;
-                    button.FlatStyle = FlatStyle.Flat;
-                    button.Size = new Size(list.Size.Width, 30);
-                    list.Controls.Add(button);
-                    list.Size = new Size(list.Size.Width, button.Size.Height * (list.Controls.IndexOf(button) + 1) + button.Size.Height / 2);
-                    button.Location = new Point(0, button.Size.Height * list.Controls.IndexOf(button));
-                    Console.WriteLine("Button: "+ list.Controls.IndexOf(button));
-                    button.Click += new EventHandler(clickItemList);
+                    setPanelSize(lastPanel);
+                    this.Controls.Add(lastPanel);
                 }
             }
-            if (list.Controls.Count < 1)
-            {
-                list.Visible = false;
-            }
-            Console.WriteLine(this.Controls.Count);
-            Console.WriteLine(this.Controls[2].Text);
-            if (this.Controls.Count > 2)
-            {
-                if (control.Name != "Search")
-                {
-                    lastPanel = control;
-                }
-                this.Controls.RemoveAt(2);
-            }
-            this.Controls.Add(panel);
         }
         
         public void searchClick(object sender, EventArgs e)
         {
-            Control control = this.Controls[2];
-            //Console.WriteLine(control.Text);
-            Panel panel = new Panel();
-            setPanel(panel,"Search" );
-            list.Controls.Clear();
-            list.Visible = false;
-            userButton.Visible = true;
-            searchTitles.Clear();
-            searchPriceCards.Clear();
-            foreach (Control child in lastPanel.Controls)
+            if (searchBar.Text.Trim() != "")
             {
-                bool check = false;
-                foreach (String word in child.Name.Split())
+                Control control = this.Controls[2];
+                //Console.WriteLine(control.Text);
+                Panel panel = new Panel();
+                setPanel(panel, "SearchClick");
+                list.Controls.Clear();
+                list.Visible = false;
+                userButton.Visible = true;
+                searchTitles.Clear();
+                searchPriceCards.Clear();
+                Console.WriteLine("SearchBar: " + searchBar.Text);
+                foreach (Control child in lastPanel.Controls)
                 {
-                    if (word.ToLower().StartsWith(searchBar.Text.ToLower()))
+                    bool check = false;
+                    foreach (String word in child.Name.Split())
                     {
-                        check = true;
+                        if (word.ToLower().StartsWith(searchBar.Text.ToLower()))
+                        {
+                            Console.WriteLine("Child: " + child.Name);
+                            check = true;
+                        }
+                    }
+
+                    //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
+                    if (check)
+                    {
+                        MemoryStream ms = new MemoryStream();
+                        Image imageIn = child.Controls[1].BackgroundImage;
+                        imageIn.Save(ms, imageIn.RawFormat);
+                        Console.WriteLine("Item: " + child.Name);
+                        //Console.WriteLine($"{child.Name}, {child.Controls[3].Text}, {child.Controls[2].Text}");
+                        setItem(panel, new GroupBox(), child.Name, child.Controls[3].Text, child.Controls[2].Text,
+                            ms.ToArray());
                     }
                 }
-                //Console.WriteLine($"{child.Name.ToLower().Contains(searchBar.Text.ToLower())} {child.Name} {searchBar.Text}");
-                if (check)
+
+                Console.WriteLine(this.Controls.Count);
+                Console.WriteLine(panel.Controls.Count);
+                if (this.Controls.Count > 2)
                 {
-                    MemoryStream ms = new MemoryStream();
-                    Image imageIn = child.Controls[1].BackgroundImage;
-                    imageIn.Save(ms,imageIn.RawFormat);
-                    setItem(panel,new GroupBox(),  child.Name, child.Controls[3].Text, child.Controls[2].Text, ms.ToArray());
+                    if (control.Name != "Search" && control.Name != "SearchClick")
+                    {
+                        lastPanel = control;
+                    }
+
+                    this.Controls.RemoveAt(2);
                 }
+                this.Controls.Add(panel);
+                searchBar.Text = "";
+                Console.WriteLine("Search Click Ended");
             }
-            Console.WriteLine(this.Controls.Count);
-            if (this.Controls.Count > 2)
-            {
-                if (control.Name != "Search")
-                {
-                    lastPanel = control;
-                }
-                this.Controls.RemoveAt(2);
-            }
-            this.Controls.Add(panel);
-            searchBar.Text = "";
         }
 
         public void getHelp(object sender, EventArgs e)
