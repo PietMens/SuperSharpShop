@@ -140,7 +140,7 @@ namespace SuperSharpShop
                 param.Value = photo;
                 command.ExecuteNonQuery();
                 Program.conn.Close();
-                Program.setItems();
+                Program.setItems(Program.App.lastPanel);
                 this.Close();
             }
         }
@@ -180,6 +180,7 @@ namespace SuperSharpShop
             setLabel(image);
             controls.Add(image);
             decription.Multiline = true;
+            type.Text = "Game";
             type.Items.Add("Game");
             type.Items.Add("Film");
             name.Size = new Size(200, 30);

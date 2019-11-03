@@ -7,29 +7,42 @@ namespace SuperSharpShop
     {
         private String name;
         private String type;
-        private double price;
+        private String price;
         private byte[] image;
         private String description;
+        private String location;
 
-        public Item(String name, String type, double price, byte[] image, String description, String where)
+        public Item(String name, String type, String price, byte[] image, String description, String where)
         {
             Name = name;
             Type = type;
             Price = price;
-            Image = this.image;
+            Image = image;
             Description = description;
+            Location = where;
+        }
+
+        public void setItem()
+        {
             Panel panel;
-            if (where.ToLower() == "shop") {
+            if (Location.ToLower() == "shop") {
                 panel = Program.App.storePanel;
-            } else if (where.ToLower() == "library") {
+            } else if (Location.ToLower() == "library") {
                 panel = Program.App.ownedPanel;
-            } else if (where.ToLower() == "installed")
+            } else if (Location.ToLower() == "installed")
             {
                 panel = Program.App.installedPanel;
             } else {
                 panel = new Panel();
             }
-            Program.App.setItem(panel, new GroupBox(), Name, Description, $"\x20ac{Price}", image);
+            Program.App.setItem(panel, new GroupBox(), Name, Description, Price, Image, Type);
+        }
+
+
+        public string Location
+        {
+            get => location;
+            set => location = value;
         }
 
         public string Name
@@ -44,7 +57,7 @@ namespace SuperSharpShop
             set => type = value;
         }
 
-        public double Price
+        public String Price
         {
             get => price;
             set => price = value;

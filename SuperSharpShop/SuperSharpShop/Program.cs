@@ -23,6 +23,10 @@ namespace SuperSharpShop
         public static MySqlConnection conn;
         public static int userId = 1;
         public static User user;
+        public static List<List<Item>> items = new List<List<Item>>();
+        public static List<Item> shopItems = new List<Item>();
+        public static List<Item> libraryItems = new List<Item>();
+        public static List<Item> installedItems = new List<Item>();
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -31,6 +35,9 @@ namespace SuperSharpShop
         {
             try
             {
+                items.Add(shopItems);
+                items.Add(libraryItems);
+                items.Add(installedItems);
                 setConnection();
                 getUser();
                 Application.EnableVisualStyles();
@@ -45,7 +52,8 @@ namespace SuperSharpShop
                 //Item Minecraft = new Item("Minecraft", "Game", 19.99, "../../IMG/minecraft.jpg", "Minecraft is a sandbox video game created by Swedish game developer Markus Persson and released by Mojang in 2011. The game allows players to build with a variety of different blocks in a 3D procedurally generated world, requiring creativity from players.", "shop");
                 //Item RainbowSixSiege = new Item("Tom Clancy's: Rainbow Six Siege", "Game", 19.99, "../../IMG/rainbowsixsiege.jpg", "Tom Clancy's Rainbow Six Siege is a first-person shooter game, in which players utilize many different operators from the Rainbow team. An in-game shop allows players to purchase operators or cosmetics using the in-game currency.", "shop");
                 //Item AssassinsCreed = new Item("Assassin's Creed Odyssey", "Game", 39.99, "../../IMG/assassinscreed.jpg", "Assassin's Creed Odyssey is a cloud-based title on the Nintendo Switch, which launched on the same day as the other platforms, but in Japan only. The game's season pass will include two DLC stories spread across six episodes as well as remastered editions of Assassin's Creed III and Assassin's Creed Liberation.", "shop");
-                setItems();
+                setItems(App.lastPanel);
+                App.setComboBox();
                 Application.Run(App);
                 //conn.Close();
             }
@@ -75,58 +83,74 @@ namespace SuperSharpShop
             conn = new MySqlConnection(connectionString);
         }
 
-        public static void setItems()
+        public static void setItems(Control panel)
         {
+            foreach (List<Item> itemList in items)
+            {
+                itemList.Clear();
+            }
+
             foreach (List<Label> labels in App.titles)
             {
                 labels.Clear();
             }
+
             foreach (List<Label> labels in App.priceCards)
             {
                 labels.Clear();
             }
+
             App.storePanel.Controls.Clear();
             App.ownedPanel.Controls.Clear();
             App.installedPanel.Controls.Clear();
-            conn.Open();
-            String sql = "SELECT * FROM items;";
-            MySqlDataReader reader;
-            MySqlCommand command = new MySqlCommand(sql, conn);
-            var da = new MySqlDataAdapter(command);
-            var ds = new DataSet();
-            da.Fill(ds, "items");
-            //int c = ds.Tables["image"].Rows.Count;
-            Console.WriteLine(ds.Tables.Count);
-            foreach (DataRow row in ds.Tables["items"].Rows)
+            if (panel.Name == "Shop")
             {
-                new Item(row[1].ToString(), row[2].ToString(), double.Parse(row[5].ToString()), (byte[])row[4], row[3].ToString(), "shop");
-            }
-            conn.Close();
-            conn.Open();
-            sql = $"SELECT item_ID FROM owned WHERE user_ID = {userId};";
-            command = new MySqlCommand(sql, conn);
-            reader = command.ExecuteReader();
+                conn.Open();
+                String sql = "SELECT * FROM items;";
+                MySqlDataReader reader;
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                var da = new MySqlDataAdapter(command);
+                var ds = new DataSet();
+                da.Fill(ds, "items");
+                //int c = ds.Tables["image"].Rows.Count;
+                Console.WriteLine(ds.Tables.Count);
+                foreach (DataRow row in ds.Tables["items"].Rows)
+                {
+                    Item item = new Item(row[1].ToString(), row[2].ToString(), $"\x20ac{row[5]}", (byte[]) row[4],
+                        row[3].ToString(), "shop");
+                    shopItems.Add(item);
+                }
+
+                conn.Close();
+            } else if (panel.Name == "Library") {
+                conn.Open();
+            String sql = $"SELECT item_ID FROM owned WHERE user_ID = {userId};";
+            MySqlCommand command = new MySqlCommand(sql, conn);
+            MySqlDataReader reader = command.ExecuteReader();
             List<String> owned = new List<string>();
             while (reader.Read())
             {
                 owned.Add(reader.GetValue(0).ToString());
             }
+
             conn.Close();
-            foreach (String item in owned)
+            foreach (String itemID in owned)
             {
                 conn.Open();
-                sql = $"SELECT * FROM items WHERE ID = '{item}';";
+                sql = $"SELECT * FROM items WHERE ID = '{itemID}';";
                 MySqlCommand newcommand = new MySqlCommand(sql, conn);
                 MySqlDataReader newreader = newcommand.ExecuteReader();
                 while (newreader.Read())
                 {
-                    new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
-                        double.Parse(newreader.GetValue(5).ToString()),(byte[])newreader.GetValue(4),
+                    Item item = new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
+                        $"\x20ac{newreader.GetValue(5).ToString()}", (byte[]) newreader.GetValue(4),
                         newreader.GetValue(3).ToString(), "library");
-                    
+                    libraryItems.Add(item);
                 }
+
                 conn.Close();
             }
         }
+    }
     }
 }
