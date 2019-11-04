@@ -119,38 +119,69 @@ namespace SuperSharpShop
                     Item item = new Item(row[1].ToString(), row[2].ToString(), $"\x20ac{row[5]}", (byte[]) row[4],
                         row[3].ToString(), "shop");
                     shopItems.Add(item);
+                    item.setItem();
                 }
 
                 conn.Close();
             } else if (panel.Name == "Library") {
                 conn.Open();
-            String sql = $"SELECT item_ID FROM owned WHERE user_ID = {userId};";
-            MySqlCommand command = new MySqlCommand(sql, conn);
-            MySqlDataReader reader = command.ExecuteReader();
-            List<String> owned = new List<string>();
-            while (reader.Read())
-            {
-                owned.Add(reader.GetValue(0).ToString());
-            }
-
-            conn.Close();
-            foreach (String itemID in owned)
-            {
-                conn.Open();
-                sql = $"SELECT * FROM items WHERE ID = '{itemID}';";
-                MySqlCommand newcommand = new MySqlCommand(sql, conn);
-                MySqlDataReader newreader = newcommand.ExecuteReader();
-                while (newreader.Read())
+                String sql = $"SELECT item_ID FROM owned WHERE user_ID = {userId};";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataReader reader = command.ExecuteReader();
+                List<String> owned = new List<string>();
+                while (reader.Read())
                 {
-                    Item item = new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
-                        $"\x20ac{newreader.GetValue(5).ToString()}", (byte[]) newreader.GetValue(4),
-                        newreader.GetValue(3).ToString(), "library");
-                    libraryItems.Add(item);
+                    owned.Add(reader.GetValue(0).ToString());
                 }
 
                 conn.Close();
+                foreach (String itemID in owned)
+                {
+                    conn.Open();
+                    sql = $"SELECT * FROM items WHERE ID = '{itemID}';";
+                    MySqlCommand newcommand = new MySqlCommand(sql, conn);
+                    MySqlDataReader newreader = newcommand.ExecuteReader();
+                    while (newreader.Read())
+                    {
+                        Item item = new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
+                            $"\x20ac{newreader.GetValue(5).ToString()}", (byte[]) newreader.GetValue(4),
+                            newreader.GetValue(3).ToString(), "library");
+                        libraryItems.Add(item);
+                        item.setItem();
+                    }
+
+                    conn.Close();
+                }
+            } else if (panel.Name == "Installed") {
+                conn.Open();
+                String sql = $"SELECT item_ID FROM owned WHERE user_ID = {userId};";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataReader reader = command.ExecuteReader();
+                List<String> owned = new List<string>();
+                while (reader.Read())
+                {
+                    owned.Add(reader.GetValue(0).ToString());
+                }
+
+                conn.Close();
+                foreach (String itemID in owned)
+                {
+                    conn.Open();
+                    sql = $"SELECT * FROM items WHERE ID = '{itemID}';";
+                    MySqlCommand newcommand = new MySqlCommand(sql, conn);
+                    MySqlDataReader newreader = newcommand.ExecuteReader();
+                    while (newreader.Read())
+                    {
+                        Item item = new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
+                            $"\x20ac{newreader.GetValue(5).ToString()}", (byte[]) newreader.GetValue(4),
+                            newreader.GetValue(3).ToString(), "installed");
+                        installedItems.Add(item);
+                        item.setItem();
+                    }
+
+                    conn.Close();
+                }
             }
         }
-    }
     }
 }

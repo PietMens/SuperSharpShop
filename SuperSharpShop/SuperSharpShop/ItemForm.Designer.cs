@@ -141,6 +141,7 @@ namespace SuperSharpShop
                 command.ExecuteNonQuery();
                 Program.conn.Close();
                 Program.setItems(Program.App.lastPanel);
+                Program.App.setComboBox();
                 this.Close();
             }
         }
@@ -155,7 +156,7 @@ namespace SuperSharpShop
             this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(400, 450);
-            this.Text = "ItemForm";
+            this.Text = "Add Item";
             Console.WriteLine(this.Text);
             this.BackColor = ColorTranslator.FromHtml("#858585");
             this.CenterToScreen();
