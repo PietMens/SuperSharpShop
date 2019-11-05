@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,8 +21,9 @@ namespace SuperSharpShop
     static class Program
     {
         public static Form1 App;
+        public static AuthForm authForm;
         public static MySqlConnection conn;
-        public static int userId = 1;
+        public static int userId;
         public static User user;
         public static List<List<Item>> items = new List<List<Item>>();
         public static List<Item> shopItems = new List<Item>();
@@ -35,14 +37,30 @@ namespace SuperSharpShop
         {
             try
             {
+                String dir = getDirectory();
+                //Console.WriteLine(dir);
+                authForm = new AuthForm();
+                String path = Directory.GetCurrentDirectory();
+                if (!Directory.Exists(dir + "SuperSharpShop"))
+                {
+                    Directory.SetCurrentDirectory(dir);
+                    Directory.CreateDirectory("SuperSharpShop");
+                    Directory.CreateDirectory("SuperSharpShop/Games");
+                    Directory.SetCurrentDirectory(path);
+                } else if (!Directory.Exists(dir + "SuperSharpShop/Games"))
+                {
+                    Directory.SetCurrentDirectory(dir);
+                    Directory.CreateDirectory("SuperSharpShop/Games");
+                    Directory.SetCurrentDirectory(path);
+                }
                 items.Add(shopItems);
                 items.Add(libraryItems);
                 items.Add(installedItems);
                 setConnection();
-                getUser();
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                App = new Form1();
+                Application.Run(authForm);
+                //App = new Form1();
                 //Item Skyrim = new Item("Elder Scrolls V: Skyrim", "Game", 59.99, "../../IMG/skyrim.jpg", "The Elder Scrolls V: Skyrim is an action role-playing game, playable from either a first or third-person perspective. The player may freely roam over the land of Skyrim which is an open world environment consisting of wilderness expanses, dungeons, cities, towns, fortresses, and villages.", "shop");
                 //Item BattlefieldV = new Item("Star Wars Battlefront II", "Game", 59.99, "../../IMG/starwarsbattlefront.jpg", "Star Wars Battlefront II features a single-player story mode, a customizable character class system, and content based on The Force Awakens and The Last Jedi movies. It also features vehicles and locations from the original, prequel, and sequel Star Wars movie trilogies.", "shop");
                 //Item GTAV = new Item("Grand Theft Auto V", "Game", 59.99, "../../IMG/gtaV.jpg", "Grand Theft Auto V is an action-adventure game played from either a third-person or first-person perspective. Players complete missions—linear scenarios with set objectives—to progress through the story. Outside of the missions, players may freely roam the open world.", "shop");
@@ -52,9 +70,9 @@ namespace SuperSharpShop
                 //Item Minecraft = new Item("Minecraft", "Game", 19.99, "../../IMG/minecraft.jpg", "Minecraft is a sandbox video game created by Swedish game developer Markus Persson and released by Mojang in 2011. The game allows players to build with a variety of different blocks in a 3D procedurally generated world, requiring creativity from players.", "shop");
                 //Item RainbowSixSiege = new Item("Tom Clancy's: Rainbow Six Siege", "Game", 19.99, "../../IMG/rainbowsixsiege.jpg", "Tom Clancy's Rainbow Six Siege is a first-person shooter game, in which players utilize many different operators from the Rainbow team. An in-game shop allows players to purchase operators or cosmetics using the in-game currency.", "shop");
                 //Item AssassinsCreed = new Item("Assassin's Creed Odyssey", "Game", 39.99, "../../IMG/assassinscreed.jpg", "Assassin's Creed Odyssey is a cloud-based title on the Nintendo Switch, which launched on the same day as the other platforms, but in Japan only. The game's season pass will include two DLC stories spread across six episodes as well as remastered editions of Assassin's Creed III and Assassin's Creed Liberation.", "shop");
-                setItems(App.lastPanel);
-                App.setComboBox();
-                Application.Run(App);
+                //setItems(App.lastPanel);
+                //App.setComboBox();
+                //Application.Run(App);
                 //conn.Close();
             }
             catch (BadImageFormatException exception)
@@ -75,6 +93,20 @@ namespace SuperSharpShop
                 user = new User(int.Parse(reader["ID"].ToString()), reader["username"].ToString(), reader["email"].ToString());
             }
             conn.Close();
+        }
+
+        public static String getDirectory()
+        {
+            String path = "";
+            OperatingSystem system = Environment.OSVersion;
+            if (system.Platform == PlatformID.Unix)
+            {
+                path = $"/home/{SystemInformation.UserName}/.local/share/";
+            } else if (system.Platform == PlatformID.Win32S)
+            {
+                path = "C:/Program Files (x86)/";
+            }
+            return path;
         }
 
         public static void setConnection()
@@ -107,13 +139,12 @@ namespace SuperSharpShop
             {
                 conn.Open();
                 String sql = "SELECT * FROM items;";
-                MySqlDataReader reader;
+                //MySqlDataReader reader;
                 MySqlCommand command = new MySqlCommand(sql, conn);
                 var da = new MySqlDataAdapter(command);
                 var ds = new DataSet();
                 da.Fill(ds, "items");
                 //int c = ds.Tables["image"].Rows.Count;
-                Console.WriteLine(ds.Tables.Count);
                 foreach (DataRow row in ds.Tables["items"].Rows)
                 {
                     Item item = new Item(row[1].ToString(), row[2].ToString(), $"\x20ac{row[5]}", (byte[]) row[4],
@@ -162,7 +193,8 @@ namespace SuperSharpShop
                 {
                     owned.Add(reader.GetValue(0).ToString());
                 }
-
+                String path = getDirectory();
+                List<String> dirs = new List<string>(Directory.GetDirectories(path + "SuperSharpShop/Games/"));
                 conn.Close();
                 foreach (String itemID in owned)
                 {
@@ -172,11 +204,14 @@ namespace SuperSharpShop
                     MySqlDataReader newreader = newcommand.ExecuteReader();
                     while (newreader.Read())
                     {
-                        Item item = new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
-                            $"\x20ac{newreader.GetValue(5).ToString()}", (byte[]) newreader.GetValue(4),
-                            newreader.GetValue(3).ToString(), "installed");
-                        installedItems.Add(item);
-                        item.setItem();
+                        if (dirs.Contains(newreader.GetValue(1).ToString()))
+                        {
+                            Item item = new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
+                                $"\x20ac{newreader.GetValue(5).ToString()}", (byte[]) newreader.GetValue(4),
+                                newreader.GetValue(3).ToString(), "installed");
+                            installedItems.Add(item);
+                            item.setItem();
+                        }
                     }
 
                     conn.Close();

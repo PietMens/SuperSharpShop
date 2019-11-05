@@ -1,8 +1,9 @@
 using System.ComponentModel;
+using System.Drawing;
 
 namespace SuperSharpShop
 {
-    partial class LoginForm
+    partial class PayForm
     {
         /// <summary>
         /// Required designer variable.
@@ -23,6 +24,18 @@ namespace SuperSharpShop
             base.Dispose(disposing);
         }
 
+        public double Price
+        {
+            get => price;
+            set => price = value;
+        }
+
+        public Item Item
+        {
+            get => item;
+            set => item = value;
+        }
+
         #region Windows Form Designer generated code
 
         /// <summary>
@@ -33,10 +46,15 @@ namespace SuperSharpShop
         {
             this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "LoginForm";
+            this.ClientSize = new System.Drawing.Size(400, 500);
+            this.Text = "Pay";
+            this.BackColor = Color.DimGray;
+            this.CenterToScreen();
         }
 
         #endregion
+
+        private double price;
+        private Item item;
     }
 }

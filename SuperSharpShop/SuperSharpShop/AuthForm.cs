@@ -2,9 +2,9 @@ using System.Windows.Forms;
 
 namespace SuperSharpShop
 {
-    public partial class LoginForm : Form
+    public partial class AuthForm : Form
     {
-        public LoginForm()
+        public AuthForm()
         {
             InitializeComponent();
         }

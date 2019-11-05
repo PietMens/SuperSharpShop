@@ -2,7 +2,10 @@
 using System.Windows.Forms;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.Remoting.Channels;
 using System.Text;
 using System.Windows.Forms.VisualStyles;
 using ContentAlignment = System.Drawing.ContentAlignment;
@@ -98,7 +101,7 @@ namespace SuperSharpShop
             PictureBox pb = (PictureBox) sender;
             Control control = pb.Parent;
             Panel panel = new Panel();
-            setPanel(panel, control.Name);
+            setItemPanel(panel, pb.Name);
             if (this.Controls.Count > 2)
             {
                 //if (control.Parent.Text != "Search" && control.Parent.Text != "SearchClick")
@@ -108,14 +111,6 @@ namespace SuperSharpShop
                 this.Controls.RemoveAt(2);
             }
             this.Controls.Add(panel);
-            PictureBox pictureBox = new PictureBox();
-            pictureBox.BorderStyle = BorderStyle.Fixed3D;
-            pictureBox.Name = pb.Name;
-            pictureBox.Location = new Point(100, 50);
-            pictureBox.Size = new Size(panel.Size.Width - pictureBox.Location.X * 2, 400);
-            pictureBox.BackgroundImage = pb.BackgroundImage;
-            pictureBox.BackgroundImageLayout = ImageLayout.Stretch;
-            panel.Controls.Add(pictureBox);
         }
         
         public void clickItemList(object sender, EventArgs e)
@@ -141,7 +136,7 @@ namespace SuperSharpShop
             }
             //Console.WriteLine(142);
             Panel panel = new Panel();
-            setPanel(panel, item.Name);
+            setItemPanel(panel, item.Name);
             if (this.Controls.Count > 2)
             {
                 //if (control.Parent.Text != "Search" && control.Parent.Text != "SearchClick")
@@ -151,15 +146,88 @@ namespace SuperSharpShop
                 this.Controls.RemoveAt(2);
             }
             this.Controls.Add(panel);
+            //Console.WriteLine(lastPanel.Name);
+        }
+
+        public void Buy(object sender, EventArgs e)
+        {
+            Button button = (Button) sender;
+            double price = double.Parse(button.Text.Substring(1));
+            Item item = null;
+            foreach (Item i in getPanelList())
+            {
+                if (i.Name == button.Name)
+                {
+                    item = i;
+                }
+            }
+            Console.WriteLine(price);
+            PayForm payForm = new PayForm(price, item);
+            payForm.Show();
+        }
+
+        public void setItemPanel(Panel panel, String name)
+        {
+            setPanel(panel, name);
+            Item item = null;
+            foreach (Item i in getPanelList())
+            {
+                if (i.Name == name)
+                {
+                    item = i;
+                }
+            }
+            Label itemName = new Label();
+            itemName.Location = new Point(50, 50);
+            itemName.Size = new Size(350, 50);
+            itemName.Text = item.Name;
+            itemName.TextAlign = ContentAlignment.MiddleCenter;
+            itemName.BackColor = ColorTranslator.FromHtml("#454545");
+            itemName.Font = new Font("Arial", 15, FontStyle.Bold);
+            panel.Controls.Add(itemName);
             PictureBox pictureBox = new PictureBox();
             pictureBox.BorderStyle = BorderStyle.Fixed3D;
-            pictureBox.Name = button.Name;
-            pictureBox.Location = new Point(100, 50);
-            pictureBox.Size = new Size(panel.Size.Width - pictureBox.Location.X * 2, 400);
-            pictureBox.BackgroundImage = item.Controls[1].BackgroundImage;
+            pictureBox.Name = name;
+            pictureBox.Location = new Point(50, 150);
+            pictureBox.Size = new Size(500, 300);
+            pictureBox.BackgroundImage = Image.FromStream( new MemoryStream(item.Image));
             pictureBox.BackgroundImageLayout = ImageLayout.Stretch;
             panel.Controls.Add(pictureBox);
-            //Console.WriteLine(lastPanel.Name);
+            Label descriptionBox = new Label();
+            Label description = new Label();
+            descriptionBox.BackColor = ColorTranslator.FromHtml("#303030");
+            descriptionBox.SuspendLayout();
+            descriptionBox.TabIndex = 0;
+            descriptionBox.TabStop = false;
+            descriptionBox.ResumeLayout(false);
+            descriptionBox.PerformLayout();
+            descriptionBox.FlatStyle = FlatStyle.Flat;
+            description.Text = item.Description;
+            descriptionBox.Size = new Size(400, 175);
+            description.Size = new Size(descriptionBox.Size.Width - 10, 170);
+            descriptionBox.Location = new Point(pictureBox.Location.X + pictureBox.Size.Width + 100, pictureBox.Location.Y);
+            description.Location = new Point(5, 13);
+            descriptionBox.BorderStyle = BorderStyle.Fixed3D;
+            description.Font = new Font("Arial", 12);
+            descriptionBox.Controls.Add(description);
+            panel.Controls.Add(descriptionBox);
+            Label title = new Label();
+            title.Text = item.Name;
+            title.Size = new Size(350, 50);
+            title.Location = new Point(descriptionBox.Location.X, descriptionBox.Location.Y + descriptionBox.Size.Height + 50);
+            title.BorderStyle = BorderStyle.Fixed3D;
+            title.Font = new Font("Arial", 12);
+            title.TextAlign = ContentAlignment.MiddleCenter;
+            title.BackColor = ColorTranslator.FromHtml("#303030");
+            panel.Controls.Add(title);
+            Button price = new Button();
+            price.Text = item.Price;
+            price.Name = item.Name;
+            price.Size = new Size(50, 50);
+            price.Location = new Point(title.Location.X + title.Size.Width, title.Location.Y);
+            price.BackColor = Color.OrangeRed;
+            price.Click += new EventHandler(Buy);
+            panel.Controls.Add(price);
         }
 
         public void setPanel(Panel panel, String name)
@@ -168,7 +236,6 @@ namespace SuperSharpShop
             panel.BackColor = ColorTranslator.FromHtml("#656565");
             panel.ForeColor = Color.Honeydew;
             panel.Location = new Point(250, menu.Size.Height);
-            //setPanelSize(panel);
             panel.Size = new Size(Screen.PrimaryScreen.Bounds.Width - panel.Location.X, Screen.PrimaryScreen.Bounds.Height - (Screen.PrimaryScreen.Bounds.Height / 5));
             panel.Name = name;
             panel.Text = name;
@@ -187,13 +254,9 @@ namespace SuperSharpShop
             {
                 setProfile();
             }
-            //panel.VerticalScroll.Visible = true;
-            //panel.VerticalScroll.Enabled = true;
             panel.AutoScroll = false;
             panel.HorizontalScroll.Enabled = false;
             panel.HorizontalScroll.Visible = false;
-            //panel.VerticalScroll.Enabled = true;
-            //panel.VerticalScroll.Visible = false;
             panel.HorizontalScroll.Maximum = 0;
             panel.AutoScrollPosition = new Point(Screen.PrimaryScreen.Bounds.Width - 100, 0);
             panel.AutoScrollMinSize = new Size(10, panel.Size.Height);
@@ -435,7 +498,7 @@ namespace SuperSharpShop
             title.Name = type;
             title.Size = new Size(200, 25);
             title.TextAlign = ContentAlignment.MiddleCenter;
-            title.Location = new Point(2, 2);
+            title.Location = new Point(2, 8);
             title.BackColor = ColorTranslator.FromHtml("#202020");
             item.Controls.Add(title);
             title.Visible = false;
@@ -446,7 +509,7 @@ namespace SuperSharpShop
             pb.Name = name;
             //Console.WriteLine(428);
             pb.Size = new Size(item.Size.Width - 4, item.Size.Height - 100);
-            pb.Location = new Point(2, 2);
+            pb.Location = new Point(2, 8);
             MemoryStream buf = new MemoryStream(image);
             pb.BackgroundImage = Image.FromStream(buf);
             pb.BackgroundImageLayout = ImageLayout.Stretch;
@@ -820,7 +883,13 @@ namespace SuperSharpShop
         {
             setItemType();
         }
+        
+        public void CloseForm(object sender, EventArgs e)
+        {
+            Environment.Exit(0);
+        }
 
+        
         #region Windows Form Designer generated code
 
         /// <summary>
@@ -891,6 +960,7 @@ namespace SuperSharpShop
             priceCards.Add(libraryPriceCards);
             priceCards.Add(installedPriceCards);
             priceCards.Add(searchPriceCards);
+            this.Closing += new CancelEventHandler(CloseForm);
         }
 
         #endregion
@@ -924,7 +994,6 @@ namespace SuperSharpShop
         public ComboBox type;
         public Control clickedPanel;
         public List<String> panelTitles = new List<string>();
-        
     }
 }
 
