@@ -3,11 +3,13 @@ using System.Windows.Forms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data.SqlClient;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.Remoting.Channels;
 using System.Text;
 using System.Windows.Forms.VisualStyles;
+using MySql.Data.MySqlClient;
 using ContentAlignment = System.Drawing.ContentAlignment;
 
 namespace SuperSharpShop
@@ -49,17 +51,24 @@ namespace SuperSharpShop
                 }
                 count = count + 1;
             }
+            //Console.WriteLine(index);
+            //Console.WriteLine(panels.Count);
             Panel Panel1 = panels[index];
             clickedPanel = Panel1;
             lastPanel.Controls.Clear();
+            //List<String> friendsPanels = new List<String>(new []{"Friends", "Requests", "Rejected", "Add"});
             if (this.Controls.Count > 2)
             {
-                if (panelTitles.Contains(Panel1.Name))
-                {
-                    lastPanel = Panel1;
-                    //Console.WriteLine(lastPanel.Text);
-                }
                 this.Controls.RemoveAt(2);
+            }
+            if (panelTitles.Contains(Panel1.Name))
+            {
+                lastPanel = Panel1;
+                //Console.WriteLine(lastPanel.Text);
+            } else if (friendsPanels.Contains(Panel1.Name))
+            {
+                friendsPanel = Panel1;
+                setFriends(new object(), new EventArgs());
             }
             this.Controls.Add(Panel1);
             if (Panel1 == profilePanel)
@@ -78,17 +87,25 @@ namespace SuperSharpShop
             
         }
 
-        public void setPanelButton(Button button, String name)
+        public void setPanelButton(Panel panel, Button button, String name)
         {
-            this.panel.Controls.Add(button);
+            panel.Controls.Add(button);
+            //Console.WriteLine(panel.ToString() + " | " + name);
             button.FlatAppearance.BorderSize = 0;
-            button.BackColor = this.panel.BackColor;
+            button.BackColor = panel.BackColor;
             button.ForeColor = Color.Honeydew;
             button.Font = new Font("Helvetica Neue", 12);
             button.FlatAppearance.BorderColor = button.BackColor;
             button.FlatStyle = FlatStyle.Flat;
-            
-            button.Location = new Point(0, panel.Controls.IndexOf(button) * 40 + 10 * panel.Controls.IndexOf(button));
+            if (panel.Name == "Friends")
+            {
+                button.Location = new Point(0, panel.Controls.IndexOf(button) * 40 + 20 * panel.Controls.IndexOf(button) + 50);
+            }
+            else
+            {
+                button.Location = new Point(0, panel.Controls.IndexOf(button) * 40 + 10 * panel.Controls.IndexOf(button));
+            }
+
             button.Size = new Size(250, 50);
             button.Name = name;
             button.Text = name;
@@ -166,6 +183,25 @@ namespace SuperSharpShop
             payForm.Show();
         }
 
+        public void Install(object sender, EventArgs e)
+        {
+            Button button = (Button) sender;
+            Console.WriteLine("Installing");
+            String dirName = button.Name.Replace(" ", "").Replace(":", "");
+            String path = Program.getDirectory() + "SuperSharpShop/Common/";
+            Directory.SetCurrentDirectory(path);
+            Directory.CreateDirectory(dirName);
+            Panel panel = new Panel();
+            Program.setAllItems();
+            setItemPanel(panel, button.Name);
+            if (this.Controls.Count > 2)
+            {
+                this.Controls.RemoveAt(2);
+            }
+            Console.WriteLine(this.Controls.Count);
+            this.Controls.Add(panel);
+        }
+
         public void setItemPanel(Panel panel, String name)
         {
             setPanel(panel, name);
@@ -213,7 +249,7 @@ namespace SuperSharpShop
             panel.Controls.Add(descriptionBox);
             Label title = new Label();
             title.Text = item.Name;
-            title.Size = new Size(350, 50);
+            title.Size = new Size(340, 50);
             title.Location = new Point(descriptionBox.Location.X, descriptionBox.Location.Y + descriptionBox.Size.Height + 50);
             title.BorderStyle = BorderStyle.Fixed3D;
             title.Font = new Font("Arial", 12);
@@ -221,18 +257,53 @@ namespace SuperSharpShop
             title.BackColor = ColorTranslator.FromHtml("#303030");
             panel.Controls.Add(title);
             Button price = new Button();
-            price.Text = item.Price;
+            bool library = false;
+            bool install = false;
+            foreach (Item libraryItem in Program.libraryItems)
+            {
+                if (libraryItem.Name == item.Name)
+                {
+                    library = true;
+                }
+            }
+            if (library)
+            {
+                foreach (Item installedItem in Program.installedItems)
+                {
+                    if (installedItem.Name == item.Name)
+                    {
+                        install = true;
+                    }
+                }
+                
+            }
+            if (install)
+            {
+                price.Enabled = false;
+                price.Text = "Installed";
+                price.BackColor = ColorTranslator.FromHtml("#454545");
+            } else if (library)
+            {
+                price.Text = "Install";
+                price.Click += new EventHandler(Install);
+                price.BackColor = Color.OrangeRed;
+            }
+            else
+            {
+                price.Text = item.Price;
+                price.Click += new EventHandler(Buy);
+                price.BackColor = Color.OrangeRed;
+            }
             price.Name = item.Name;
-            price.Size = new Size(50, 50);
+            price.Size = new Size(descriptionBox.Size.Width - title.Size.Width, title.Size.Height);
             price.Location = new Point(title.Location.X + title.Size.Width, title.Location.Y);
-            price.BackColor = Color.OrangeRed;
-            price.Click += new EventHandler(Buy);
             panel.Controls.Add(price);
         }
 
         public void setPanel(Panel panel, String name)
         {
             panels.Add(panel);
+            List<String> friends = new List<string>(new []{"Friends", "Requests", "Rejected", "Awaiting", "Add"});
             panel.BackColor = ColorTranslator.FromHtml("#656565");
             panel.ForeColor = Color.Honeydew;
             panel.Location = new Point(250, menu.Size.Height);
@@ -247,12 +318,38 @@ namespace SuperSharpShop
                     list.Add(label.Text);
                 }
             }
-            if (name != "Search" && name != "SearchClick" && !list.Contains(name) && name != Program.user.Name)
+            if (name != "Search" && name != "SearchClick" && !list.Contains(name) && name != Program.user.Name && !friends.Contains(name))
             {
-                setPanelButton(new Button(), name);
+                setPanelButton(this.panel, new Button(), name);
+            } else if (friends.Contains(name)) {
+                //Console.WriteLine(sidePanel.Name);
+                setPanelButton(sidePanel, new Button(), name);
+                Label title = new Label();
+                title.Location = new Point(25, 25);
+                title.Size = new Size(200, 50);
+                title.Text = name;
+                title.TextAlign = ContentAlignment.MiddleCenter;
+                title.BackColor = ColorTranslator.FromHtml("#454545");
+                title.Font = new Font("Arial", 20, FontStyle.Bold);
+                panel.Controls.Add(title);
+                friendsPanels.Add(name);
             } else if (name == Program.user.Name)
             {
                 setProfile();
+            } else if (list.Contains(name))
+            {
+                List<int> indexes = new List<int>();
+                foreach (Panel pane in panels)
+                {
+                    if (pane.Name == name)
+                    {
+                        panels.IndexOf(pane);
+                    }
+                }
+                foreach (int index in indexes)
+                {
+                    panels.RemoveAt(index);
+                }
             }
             panel.AutoScroll = false;
             panel.HorizontalScroll.Enabled = false;
@@ -606,6 +703,7 @@ namespace SuperSharpShop
                         button.Location = new Point(0, button.Size.Height * list.Controls.IndexOf(button));
                         //`Console.WriteLine("Button: "+ list.Controls.IndexOf(button));
                         button.Click += new EventHandler(clickItemList);
+                        Console.WriteLine(list.Size.Height);
                     }
                 }
                 if (list.Controls.Count < 1)
@@ -623,7 +721,7 @@ namespace SuperSharpShop
 
                     this.Controls.RemoveAt(2);
                 }
-                setPanelSize(panel);
+                //setPanelSize(panel);
                 this.Controls.Add(panel);
                 Console.WriteLine("Search Ended");
             }
@@ -645,7 +743,7 @@ namespace SuperSharpShop
                 }
                 if (control.Name != "SearchClick")
                 {
-                    setPanelSize(lastPanel);
+                    //setPanelSize(lastPanel);
                     this.Controls.Add(lastPanel);
                 }
             }
@@ -725,33 +823,309 @@ namespace SuperSharpShop
             MessageBox.Show("Stop it. Get some Help");
         }
 
+        public void setShop(object sender, EventArgs e)
+        {
+            if (this.Controls.Count > 2)
+            {
+                this.Controls.RemoveAt(2);
+            }
+            this.Controls.RemoveAt(1);
+            this.Controls.Add(panel);
+            Program.setItems(lastPanel);
+            this.Controls.Add(lastPanel);
+            setComboBox();
+        }
+
+        public void requestClick(object sender, EventArgs e)
+        {
+            Button button = (Button) sender;
+            int id = int.Parse(button.Name);
+            if (button.Text == "Accept")
+            {
+                Program.conn.Open();
+                String sql = $"UPDATE friends SET answered = 1, accepted = 1 WHERE applicant_ID = {id} AND receiver_ID = {Program.userId};";
+                MySqlCommand command = new MySqlCommand(sql, Program.conn);
+                command.ExecuteNonQuery();
+                Program.conn.Close();
+            } else if (button.Text == "Reject")
+            {
+                Program.conn.Open();
+                String sql = $"UPDATE friends SET answered = 1, accepted = 0 WHERE applicant_ID = {id} AND receiver_ID = {Program.userId};";
+                MySqlCommand command = new MySqlCommand(sql, Program.conn);
+                command.ExecuteNonQuery();
+                Program.conn.Close();
+            } else if (button.Text == "Add")
+            {
+                Program.conn.Open();
+                String sql = $"INSERT INTO friends (applicant_ID, receiver_ID) VALUES ({Program.userId}, {id})";
+                MySqlCommand command = new MySqlCommand(sql, Program.conn);
+                command.ExecuteNonQuery();
+                Program.conn.Close();
+            }
+            setFriends(new object(), new EventArgs());
+        }
+
+        public void setFriend(Panel panel, GroupBox item, int id, String name, String email,String role, bool active)
+        {
+            item.Name = name;
+            panel.Controls.Add(item);
+            item.Size = new Size(825, 65);
+            item.Location = new Point(100, (item.Size.Height - 8) * panel.Controls.IndexOf(item) + 100);
+            item.SuspendLayout();
+            item.TabIndex = 0;
+            item.TabStop = false;
+            item.ResumeLayout(false);
+            item.PerformLayout();
+            Label label = new Label();
+            label.BackColor = ColorTranslator.FromHtml("#353535");
+            item.Controls.Add(label);
+            label.Size = new Size(item.Size.Width - 4, item.Size.Height - 10);
+            label.Location = new Point(2, 8);
+            Label username = new Label();
+            username.Text = name;
+            username.Font = new Font("Arial", 14);
+            username.Size = new Size(200, label.Size.Height);
+            username.TextAlign = ContentAlignment.MiddleCenter;
+            label.Controls.Add(username);
+            Label emailBox = new Label();
+            emailBox.Text = email;
+            emailBox.Font = new Font("Arial", 10);
+            emailBox.Location = new Point(200, 0);
+            emailBox.Size = new Size(200, label.Size.Height);
+            emailBox.TextAlign = ContentAlignment.MiddleCenter;
+            label.Controls.Add(emailBox);
+            Label roleBox = new Label();
+            roleBox.Text = $"Role: {role}";
+            roleBox.Font = new Font("Arial", 11);
+            roleBox.Location = new Point(400, 0);
+            roleBox.Size = new Size(200, label.Size.Height);
+            roleBox.TextAlign = ContentAlignment.MiddleCenter;
+            label.Controls.Add(roleBox);
+            if (panel.Name == "Friends" || panel.Name == "Awaiting")
+            {
+                Label statusBox = new Label();
+                String status = "";
+                if (active)
+                {
+                    status = "Online";
+                }
+                else
+                {
+                    status = "Offline";
+                }
+                statusBox.Text = $"Status: {status}";
+                statusBox.Font = new Font("Arial", 12);
+                statusBox.Size = new Size(150, label.Size.Height);
+                statusBox.Location = new Point(label.Size.Width - statusBox.Size.Width, 0);
+                statusBox.TextAlign = ContentAlignment.MiddleCenter;
+                label.Controls.Add(statusBox);
+            } else if (panel.Name == "Requests")
+            {
+                Button acceptButton = new Button();
+                acceptButton.Text = "Accept";
+                acceptButton.Name = id.ToString();
+                acceptButton.BackColor = Color.LimeGreen;
+                acceptButton.Size = new Size(label.Size.Height + 25, label.Size.Height);
+                acceptButton.Location = new Point(label.Size.Width - (acceptButton.Size.Width * 2), 0);
+                acceptButton.Click += new EventHandler(requestClick);
+                label.Controls.Add(acceptButton);
+                Button rejectButton = new Button();
+                rejectButton.Text = "Reject";
+                rejectButton.Name = id.ToString();
+                rejectButton.BackColor = Color.Red;
+                rejectButton.Size = new Size(label.Size.Height + 25, label.Size.Height);
+                rejectButton.Location = new Point(label.Size.Width - rejectButton.Size.Width, 0);
+                rejectButton.Click += new EventHandler(requestClick);
+                label.Controls.Add(rejectButton);
+            } else if (panel.Name == "Add")
+            {
+                String list = getFriendsList(name);
+                if (list == "friends" || list == "awaiting")
+                {
+                    Button addButton = new Button();
+                    addButton.Text = "Added";
+                    addButton.Name = id.ToString();
+                    addButton.BackColor = ColorTranslator.FromHtml("#454545");
+                    addButton.Size = new Size(label.Size.Height + 25, label.Size.Height);
+                    addButton.Location = new Point(label.Size.Width - (addButton.Size.Width), 0);
+                    //addButton.Click += new EventHandler(requestClick);
+                    addButton.Enabled = false;
+                    label.Controls.Add(addButton);
+                }
+                else if (list == "request")
+                {
+                    Button acceptButton = new Button();
+                    acceptButton.Text = "Accept";
+                    acceptButton.Name = id.ToString();
+                    acceptButton.BackColor = Color.LimeGreen;
+                    acceptButton.Size = new Size(label.Size.Height + 25, label.Size.Height);
+                    acceptButton.Location = new Point(label.Size.Width - (acceptButton.Size.Width * 2), 0);
+                    acceptButton.Click += new EventHandler(requestClick);
+                    label.Controls.Add(acceptButton);
+                    Button rejectButton = new Button();
+                    rejectButton.Text = "Reject";
+                    rejectButton.Name = id.ToString();
+                    rejectButton.BackColor = Color.Red;
+                    rejectButton.Size = new Size(label.Size.Height + 25, label.Size.Height);
+                    rejectButton.Location = new Point(label.Size.Width - rejectButton.Size.Width, 0);
+                    rejectButton.Click += new EventHandler(requestClick);
+                    label.Controls.Add(rejectButton);
+                }
+                else if (list == "None")
+                {
+                    Button addButton = new Button();
+                    addButton.Text = "Add";
+                    addButton.Name = id.ToString();
+                    addButton.BackColor = Color.LimeGreen;
+                    addButton.Size = new Size(label.Size.Height + 25, label.Size.Height);
+                    addButton.Location = new Point(label.Size.Width - (addButton.Size.Width), 0);
+                    addButton.Click += new EventHandler(requestClick);
+                    label.Controls.Add(addButton);
+                }
+            }
+        }
+
+        public String getFriendsList(String name)
+        {
+            foreach (User user in Program.friends)
+            {
+                if (user.Name == name)
+                {
+                    return "friends";
+                }
+            }
+            foreach (User user in Program.awaitingUsers)
+            {
+                if (user.Name == name)
+                {
+                    return "awaiting";
+                }
+            }
+            foreach (User user in Program.requestUsers)
+            {
+                if (user.Name == name)
+                {
+                    return "request";
+                }
+            }
+            return "None";
+        }
+
+        public void searchFriend(object sender, EventArgs e)
+        {
+            TextBox searchBar = (TextBox) sender;
+            Panel panel = (Panel) searchBar.Parent;
+            searchList.Controls.Clear();
+            searchFriendsClear(panel);
+            if (searchBar.Text.Trim() != "")
+            {
+                foreach (User user in Program.users)
+                {
+                    if (user.Name.ToLower().StartsWith(searchBar.Text.ToLower()))
+                    {
+                        user.setFriend(panelAdd);
+                    }
+                }
+            }
+        }
+
+        public void searchFriendsClear(Panel panel)
+        {
+            List<int> indexes = new List<int>();
+            Console.WriteLine(panel.Controls.Count);
+            foreach (Control control in panel.Controls)
+            {
+                if (panel.Controls.IndexOf(control) > 1)
+                {
+                    indexes.Add(panel.Controls.IndexOf(control));
+                }
+            }
+            indexes.Reverse();
+            foreach (int index in indexes)
+            {
+                panel.Controls.RemoveAt(index);
+            }
+        }
+
+        public void addFriendsPanel(Panel panel)
+        {
+            TextBox searchBar = new TextBox();
+            searchBar.Size = new Size(500, 50);
+            searchBar.Location = new Point(300, 50);
+            searchBar.Font = new Font("Arial", 15);
+            searchBar.TextChanged += new EventHandler(searchFriend);
+            panel.Controls.Add(searchBar);
+            //searchList.Visible = false;
+            //searchList.Location = new Point(searchBar.Location.X, searchBar.Location.Y + searchBar.Size.Height);
+            //searchList.Size = new Size(searchBar.Size.Width, 0);
+            //panel.Controls.Add(searchList);
+            Program.setFriends(panel);
+            
+        }
+
+        public void setFriends(object sender, EventArgs e)
+        {
+            sidePanel.Name = "Friends";
+            //Console.WriteLine(sidePanel.Name);
+            sidePanel.Size = new Size(250, Screen.PrimaryScreen.Bounds.Height - menu.Size.Height);
+            sidePanel.Location = new Point(0, menu.Size.Height);
+            sidePanel.BackColor = ColorTranslator.FromHtml("#454545");
+            sidePanel.Controls.Clear();
+            friendsPanels.Clear();
+            panelFriends.Controls.Clear();
+            panelRequests.Controls.Clear();
+            panelAwaiting.Controls.Clear();
+            setPanel(panelFriends, "Friends");
+            Program.setFriends(panelFriends);
+            setPanel(panelRequests, "Requests");
+            Program.setFriends(panelRequests);
+            //setPanel(panelRejected, "Rejected");
+            setPanel(panelAwaiting, "Awaiting");
+            Program.setFriends(panelAwaiting);
+            setPanel(panelAdd, "Add");
+            addFriendsPanel(panelAdd);
+            //setPanel(new Panel(), "Accepted");
+            //panel.BackColor = Color.Aquamarine;
+            if (this.Controls.Count > 2)
+            {
+                this.Controls.RemoveAt(2);
+            }
+            this.Controls.RemoveAt(1);
+            this.Controls.Add(sidePanel);
+            this.Controls.Add(friendsPanel);
+        }
+        
         public void setMenu(Panel menu, String name)
         {
             menu.BorderStyle = BorderStyle.None;
             menu.BackColor = ColorTranslator.FromHtml("#353535");
             menu.Size = new Size(Screen.PrimaryScreen.Bounds.Width, 35);
-            Label label = new Label();
-            label.Text = "SuperSharpShop";
-            label.Font = new Font("Arial", 9, FontStyle.Bold);
-            label.TextAlign = ContentAlignment.MiddleCenter;
-            menu.Controls.Add(label);
             Button button = new Button();
-            button.Text = "Add Item";
+            button.Text = "SuperSharpShop";
+            button.Font = new Font("Arial", 8, FontStyle.Bold);
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
-            button.Click += new EventHandler(addItem);
+            button.TextAlign = ContentAlignment.MiddleCenter;
+            button.Click += new EventHandler(setShop);
             menu.Controls.Add(button);
             Button button1 = new Button();
-            button1.Text = "Friends";
+            button1.Text = "Add Item";
             button1.FlatStyle = FlatStyle.Flat;
             button1.FlatAppearance.BorderSize = 0;
+            button1.Click += new EventHandler(addItem);
             menu.Controls.Add(button1);
             Button button2 = new Button();
-            button2.Text = "Help";
+            button2.Text = "Friends";
             button2.FlatStyle = FlatStyle.Flat;
             button2.FlatAppearance.BorderSize = 0;
-            button2.Click += new EventHandler(getHelp);
+            button2.Click += new EventHandler(setFriends);
             menu.Controls.Add(button2);
+            Button button3 = new Button();
+            button3.Text = "Help";
+            button3.FlatStyle = FlatStyle.Flat;
+            button3.FlatAppearance.BorderSize = 0;
+            button3.Click += new EventHandler(getHelp);
+            menu.Controls.Add(button3);
             foreach (Control item in menu.Controls)
             {
                 item.ForeColor = Color.Honeydew;
@@ -886,9 +1260,20 @@ namespace SuperSharpShop
         
         public void CloseForm(object sender, EventArgs e)
         {
+            // UPDATE `items` SET `image` = (SELECT image FROM (SELECT * FROM `items`) AS `tablie` WHERE name = 'cdijvi') WHERE ID = 4;
+            Program.conn.Open();
+            String sql = $"UPDATE users SET active = 0 WHERE ID = {Program.userId}";
+            MySqlCommand command = new MySqlCommand(sql, Program.conn);
+            command.ExecuteNonQuery();
+            Program.conn.Close();
+            Console.WriteLine("Exit");
             Environment.Exit(0);
         }
 
+        public void startForm(object sender, EventArgs e)
+        {
+            Application.ApplicationExit += Program.Exit;
+        }
         
         #region Windows Form Designer generated code
 
@@ -952,6 +1337,7 @@ namespace SuperSharpShop
             //installedPanel.BackColor = Color.Green;
             this.Controls.Add(storePanel);
             this.lastPanel = storePanel;
+            this.friendsPanel = panelFriends;
             titles.Add(storeTitles);
             titles.Add(libraryTitles);
             titles.Add(installedTitles);
@@ -961,6 +1347,7 @@ namespace SuperSharpShop
             priceCards.Add(installedPriceCards);
             priceCards.Add(searchPriceCards);
             this.Closing += new CancelEventHandler(CloseForm);
+            //this.Load += new EventHandler(startForm);
         }
 
         #endregion
@@ -987,6 +1374,7 @@ namespace SuperSharpShop
         public List<Label> searchPriceCards = new List<Label>();
         public List<List<Label>> priceCards = new List<List<Label>>();
         public Control lastPanel;
+        public Control friendsPanel;
         public Panel menu = new Panel();
         public Panel profilePanel = new Panel();
         public ItemForm itemForm;
@@ -994,6 +1382,14 @@ namespace SuperSharpShop
         public ComboBox type;
         public Control clickedPanel;
         public List<String> panelTitles = new List<string>();
+        public Panel sidePanel = new Panel();
+        public List<String> friendsPanels = new List<String>();
+        public Panel panelFriends = new Panel();
+        public Panel panelRequests = new Panel();
+        //public Panel panelRejected = new Panel();
+        public Panel panelAwaiting = new Panel();
+        public Panel panelAdd = new Panel();
+        public ListBox searchList = new ListBox();
     }
 }
 

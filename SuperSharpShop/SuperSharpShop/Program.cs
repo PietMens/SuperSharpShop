@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -23,8 +24,12 @@ namespace SuperSharpShop
         public static Form1 App;
         public static AuthForm authForm;
         public static MySqlConnection conn;
-        public static int userId;
+        public static int userId = 0;
         public static User user;
+        public static List<User> users = new List<User>();
+        public static List<User> awaitingUsers = new List<User>();
+        public static List<User> friends = new List<User>();
+        public static List<User> requestUsers = new List<User>();
         public static List<List<Item>> items = new List<List<Item>>();
         public static List<Item> shopItems = new List<Item>();
         public static List<Item> libraryItems = new List<Item>();
@@ -45,12 +50,12 @@ namespace SuperSharpShop
                 {
                     Directory.SetCurrentDirectory(dir);
                     Directory.CreateDirectory("SuperSharpShop");
-                    Directory.CreateDirectory("SuperSharpShop/Games");
+                    Directory.CreateDirectory("SuperSharpShop/Commo");
                     Directory.SetCurrentDirectory(path);
-                } else if (!Directory.Exists(dir + "SuperSharpShop/Games"))
+                } else if (!Directory.Exists(dir + "SuperSharpShop/Common"))
                 {
                     Directory.SetCurrentDirectory(dir);
-                    Directory.CreateDirectory("SuperSharpShop/Games");
+                    Directory.CreateDirectory("SuperSharpShop/Common");
                     Directory.SetCurrentDirectory(path);
                 }
                 items.Add(shopItems);
@@ -81,16 +86,182 @@ namespace SuperSharpShop
             }
         }
 
+        public static void Exit(object sender, EventArgs e)
+        {
+            if (userId != 0)
+            {
+                conn.Open();
+                Console.WriteLine("Exited");
+                String sql = $"UPDATE users SET active = 0 WHERE ID = {userId}";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                command.ExecuteNonQuery();
+                conn.Close();
+            }
+        }
+
+        public static void setFriends(Panel panel)
+        {
+            if (panel.Name == "Friends")
+            {
+                friends.Clear();
+                conn.Open();
+                Console.WriteLine(conn.State);
+                String sql = $"SELECT * FROM friends WHERE applicant_ID = {userId};";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                var da = new MySqlDataAdapter(command);
+                var ds = new DataSet();
+                da.Fill(ds, "users");
+                List<int> receivers = new List<int>();
+                //Console.WriteLine(int.Parse(reader[2].ToString()));
+                foreach (DataRow row in ds.Tables["users"].Rows)
+                {
+                    if (bool.Parse(row[4].ToString()))
+                    {
+                        receivers.Add(int.Parse(row[2].ToString()));
+                    }
+                }
+                conn.Close();
+                foreach (int receiver in receivers)
+                {
+                    conn.Open();
+                    sql = $"SELECT * FROM users WHERE ID = {receiver};";
+                    command = new MySqlCommand(sql, conn);
+                    da = new MySqlDataAdapter(command);
+                    ds = new DataSet();
+                    da.Fill(ds);
+                    DataRow row = ds.Tables[0].Rows[0];
+                    User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
+                    friends.Add(user);
+                    user.setFriend(panel);
+                    conn.Close();
+                }
+                conn.Open();
+                sql = $"SELECT * FROM friends WHERE receiver_ID = {userId};";
+                command = new MySqlCommand(sql, conn);
+                da = new MySqlDataAdapter(command);
+                ds = new DataSet();
+                da.Fill(ds, "users");
+                List<int> applicants = new List<int>();
+                //Console.WriteLine(int.Parse(reader[2].ToString()));
+                foreach (DataRow row in ds.Tables["users"].Rows)
+                {
+                    if (bool.Parse(row[4].ToString()))
+                    {
+                        applicants.Add(int.Parse(row[1].ToString()));
+                    }
+                }
+                conn.Close();
+                foreach (int applicant in applicants)
+                {
+                    conn.Open();
+                    sql = $"SELECT * FROM users WHERE ID = {applicant};";
+                    command = new MySqlCommand(sql, conn);
+                    da = new MySqlDataAdapter(command);
+                    ds = new DataSet();
+                    da.Fill(ds);
+                    DataRow row = ds.Tables[0].Rows[0];
+                    User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
+                    friends.Add(user);
+                    user.setFriend(panel);
+                    conn.Close();
+                }
+            } else if (panel.Name == "Requests")
+            {
+                requestUsers.Clear();
+                conn.Open();
+                String sql = $"SELECT * FROM friends WHERE receiver_ID = {userId};";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataAdapter da = new MySqlDataAdapter(command);
+                DataSet ds = new DataSet();
+                da.Fill(ds, "users");
+                List<int> applicants = new List<int>();
+                //Console.WriteLine(int.Parse(reader[2].ToString()));
+                foreach (DataRow row in ds.Tables["users"].Rows)
+                {
+                    if (!bool.Parse(row[3].ToString()))
+                    {
+                        applicants.Add(int.Parse(row[1].ToString()));
+                    }
+                }
+                conn.Close();
+                foreach (int applicant in applicants)
+                {
+                    conn.Open();
+                    sql = $"SELECT * FROM users WHERE ID = {applicant};";
+                    command = new MySqlCommand(sql, conn);
+                    da = new MySqlDataAdapter(command);
+                    ds = new DataSet();
+                    da.Fill(ds);
+                    DataRow row = ds.Tables[0].Rows[0];
+                    User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
+                    requestUsers.Add(user);
+                    user.setFriend(panel);
+                    conn.Close();
+                }
+            } else if (panel.Name == "Awaiting") {
+                awaitingUsers.Clear();
+                conn.Open();
+                String sql = $"SELECT * FROM friends WHERE applicant_ID = {userId};";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                MySqlDataAdapter da = new MySqlDataAdapter(command);
+                DataSet ds = new DataSet();
+                da.Fill(ds, "users");
+                List<int> receivers = new List<int>();
+                foreach (DataRow row in ds.Tables["users"].Rows)
+                {
+                    if (!bool.Parse(row[3].ToString()))
+                    {
+                        receivers.Add(int.Parse(row[2].ToString()));
+                    }
+                }
+                conn.Close();
+                foreach (int receiver in receivers)
+                {
+                    conn.Open();
+                    sql = $"SELECT * FROM users WHERE ID = {receiver};";
+                    command = new MySqlCommand(sql, conn);
+                    da = new MySqlDataAdapter(command);
+                    ds = new DataSet();
+                    da.Fill(ds);
+                    DataRow row = ds.Tables[0].Rows[0];
+                    User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(),
+                        int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
+                    awaitingUsers.Add(user);
+                    user.setFriend(panel);
+                    conn.Close();
+                }
+            }
+            else if (panel.Name == "Add")
+            {
+                users.Clear();
+                conn.Open();
+                String sql = $"SELECT * FROM users WHERE ID != {userId};";
+                MySqlCommand command = new MySqlCommand(sql, conn);
+                var da = new MySqlDataAdapter(command);
+                var ds = new DataSet();
+                da.Fill(ds, "users");
+                foreach (DataRow row in ds.Tables["users"].Rows)
+                {
+                    User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
+                    users.Add(user);
+                }
+                conn.Close();
+            }
+        }
+
         public static void getUser()
         {
             conn.Open();
+            Console.WriteLine(conn.State);
             String sql = $"SELECT * FROM users WHERE ID = {userId};";
             MySqlDataReader reader;
             MySqlCommand command = new MySqlCommand(sql, conn);
             reader = command.ExecuteReader();
             while (reader.Read())
             {
-                user = new User(int.Parse(reader["ID"].ToString()), reader["username"].ToString(), reader["email"].ToString());
+                Console.WriteLine(bool.Parse(reader["active"].ToString()));
+                Console.WriteLine(reader["active"].ToString());
+                user = new User(int.Parse(reader["ID"].ToString()), reader["username"].ToString(), reader["email"].ToString(), int.Parse(reader["role"].ToString()), bool.Parse(reader["active"].ToString()));
             }
             conn.Close();
         }
@@ -112,31 +283,34 @@ namespace SuperSharpShop
         public static void setConnection()
         {
             String connectionString = "SERVER=localhost;DATABASE=SuperSharpShop;UID=root;PASSWORD=;";
+            //String connectionString = "SERVER=192.168.0.113;DATABASE=SuperSharpShop;UID=root;PASSWORD=;";
             conn = new MySqlConnection(connectionString);
+        }
+
+        public static void setAllItems()
+        {
+            setItems(App.storePanel);
+            setItems(App.ownedPanel);
+            setItems(App.installedPanel);
         }
 
         public static void setItems(Control panel)
         {
-            foreach (List<Item> itemList in items)
-            {
-                itemList.Clear();
-            }
-
+            //Console.WriteLine(120);
             foreach (List<Label> labels in App.titles)
             {
                 labels.Clear();
             }
-
+            //Console.WriteLine(125);
             foreach (List<Label> labels in App.priceCards)
             {
                 labels.Clear();
             }
-
-            App.storePanel.Controls.Clear();
-            App.ownedPanel.Controls.Clear();
-            App.installedPanel.Controls.Clear();
+            //Console.WriteLine(130);
             if (panel.Name == "Shop")
             {
+                App.storePanel.Controls.Clear();
+                shopItems.Clear();
                 conn.Open();
                 String sql = "SELECT * FROM items;";
                 //MySqlDataReader reader;
@@ -144,7 +318,6 @@ namespace SuperSharpShop
                 var da = new MySqlDataAdapter(command);
                 var ds = new DataSet();
                 da.Fill(ds, "items");
-                //int c = ds.Tables["image"].Rows.Count;
                 foreach (DataRow row in ds.Tables["items"].Rows)
                 {
                     Item item = new Item(row[1].ToString(), row[2].ToString(), $"\x20ac{row[5]}", (byte[]) row[4],
@@ -152,9 +325,10 @@ namespace SuperSharpShop
                     shopItems.Add(item);
                     item.setItem();
                 }
-
                 conn.Close();
             } else if (panel.Name == "Library") {
+                App.ownedPanel.Controls.Clear();
+                libraryItems.Clear();
                 conn.Open();
                 String sql = $"SELECT item_ID FROM owned WHERE user_ID = {userId};";
                 MySqlCommand command = new MySqlCommand(sql, conn);
@@ -184,6 +358,8 @@ namespace SuperSharpShop
                     conn.Close();
                 }
             } else if (panel.Name == "Installed") {
+                App.installedPanel.Controls.Clear();
+                installedItems.Clear();
                 conn.Open();
                 String sql = $"SELECT item_ID FROM owned WHERE user_ID = {userId};";
                 MySqlCommand command = new MySqlCommand(sql, conn);
@@ -193,8 +369,8 @@ namespace SuperSharpShop
                 {
                     owned.Add(reader.GetValue(0).ToString());
                 }
-                String path = getDirectory();
-                List<String> dirs = new List<string>(Directory.GetDirectories(path + "SuperSharpShop/Games/"));
+                String path = getDirectory() + "SuperSharpShop/Common/";
+                List<String> dirs =  new List<string>(Directory.GetDirectories(path));
                 conn.Close();
                 foreach (String itemID in owned)
                 {
@@ -204,7 +380,9 @@ namespace SuperSharpShop
                     MySqlDataReader newreader = newcommand.ExecuteReader();
                     while (newreader.Read())
                     {
-                        if (dirs.Contains(newreader.GetValue(1).ToString()))
+                        String dirName = newreader.GetValue(1).ToString().Replace(" ", "").Replace(":", "");
+                        String  pathName = path + dirName;
+                        if (dirs.Contains(pathName))
                         {
                             Item item = new Item(newreader.GetValue(1).ToString(), newreader.GetValue(2).ToString(),
                                 $"\x20ac{newreader.GetValue(5).ToString()}", (byte[]) newreader.GetValue(4),

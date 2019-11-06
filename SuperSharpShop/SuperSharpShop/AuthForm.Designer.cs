@@ -32,7 +32,7 @@ namespace SuperSharpShop
 
         public void ColorSwitch()
         {
-            Console.WriteLine(lastPanel.Name);
+            //Console.WriteLine(lastPanel.Name);
             if (lastPanel.Name == "Login")
             {
                 loginPanelButton.BackColor = ColorTranslator.FromHtml("#454545");
@@ -143,14 +143,19 @@ namespace SuperSharpShop
                         if (hashed == row[2].ToString())
                         {
                             Program.userId = int.Parse(row[0].ToString());
-                            Program.getUser();
                             Program.conn.Close();
-                            Program.App = new Form1();
-                            Program.setItems(Program.App.lastPanel);
-                            Program.App.setComboBox();
+                            Program.conn.Open();
+                            sql = $"UPDATE users SET active = 1 WHERE ID = {Program.userId};";
+                            command = new MySqlCommand(sql, Program.conn);
+                            command.ExecuteNonQuery();
+                            Program.conn.Close();
+                            Program.getUser();
                             this.Close();
                             Application.EnableVisualStyles();
                             Application.SetCompatibleTextRenderingDefault(false);
+                            Program.App = new Form1();
+                            Program.setAllItems();
+                            Program.App.setComboBox();
                             Application.Run(Program.App);
                         }
                     }
@@ -179,7 +184,7 @@ namespace SuperSharpShop
                     if (ds.Tables["users"].Rows.Count < 1)
                     {
                         Program.conn.Open();
-                        sql = $"INSERT INTO users (username, password, email) VALUES ('{username}', '{hashed}', '{email}');";
+                        sql = $"INSERT INTO users (username, password, email, role, active) VALUES ('{username}', '{hashed}', '{email}', 1, 1);";
                         command = new MySqlCommand(sql, Program.conn);
                         command.ExecuteNonQuery();
                         sql = $"SELECT * FROM users WHERE username = '{username}';";
@@ -195,7 +200,7 @@ namespace SuperSharpShop
                             Program.getUser();
                             Program.conn.Close();
                             Program.App = new Form1();
-                            Program.setItems(Program.App.lastPanel);
+                            Program.setAllItems();
                             Program.App.setComboBox();
                             this.Close();
                             Application.EnableVisualStyles();
