@@ -10,6 +10,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -263,12 +265,32 @@ namespace SuperSharpShop
             OperatingSystem system = Environment.OSVersion;
             if (system.Platform == PlatformID.Unix)
             {
-                path = $"/home/{SystemInformation.UserName}/.local/share/";
+                return $"/home/{SystemInformation.UserName}/.local/share/";
             } else if (system.Platform == PlatformID.Win32S)
             {
-                path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+                path =  Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+                SetFolderPermission(path);
+                return path;
             }
+            path =  Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            SetFolderPermission(path);
             return path;
+        }
+        
+        public static void SetFolderPermission(string folderPath)
+        {
+            var directoryInfo = new DirectoryInfo(folderPath);
+            var directorySecurity = directoryInfo.GetAccessControl();
+            var currentUserIdentity = WindowsIdentity.GetCurrent();
+            var fileSystemRule = new FileSystemAccessRule(currentUserIdentity.Name, 
+                FileSystemRights.Read, 
+                InheritanceFlags.ObjectInherit |
+                InheritanceFlags.ContainerInherit, 
+                PropagationFlags.None,
+                AccessControlType.Allow);
+          
+            directorySecurity.AddAccessRule(fileSystemRule);
+            directoryInfo.SetAccessControl(directorySecurity);
         }
 
         public static void setConnection()
