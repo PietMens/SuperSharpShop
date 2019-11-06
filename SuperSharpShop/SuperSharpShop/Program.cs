@@ -49,7 +49,7 @@ namespace SuperSharpShop
                 {
                     Directory.SetCurrentDirectory(dir);
                     Directory.CreateDirectory("SuperSharpShop");
-                    Directory.CreateDirectory("SuperSharpShop/Commo");
+                    Directory.CreateDirectory("SuperSharpShop/Common");
                     Directory.SetCurrentDirectory(path);
                 } else if (!Directory.Exists(dir + "SuperSharpShop/Common"))
                 {
@@ -266,7 +266,7 @@ namespace SuperSharpShop
                 path = $"/home/{SystemInformation.UserName}/.local/share/";
             } else if (system.Platform == PlatformID.Win32S)
             {
-                path = "C:/Program Files (x86)/";
+                path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
             }
             return path;
         }
