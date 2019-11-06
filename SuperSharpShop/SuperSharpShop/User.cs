@@ -18,12 +18,14 @@ namespace SuperSharpShop
             Name = name;
             Email = email;
             Role = role;
+            Active = active;
         }
 
         public void setFriend(Panel panel)
         {
             List<String> roles = new List<string>(new []{"", "User", "Admin"});
-            Program.App.setFriend(panel, new GroupBox(), Id, Name, Email, roles[Role], Active);
+            Program.App.setFriend(panel, new GroupBox(), Id,
+                Name, Email, roles[Role], Active);
         }
 
         public bool Active

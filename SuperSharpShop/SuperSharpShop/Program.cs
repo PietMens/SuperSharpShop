@@ -43,7 +43,6 @@ namespace SuperSharpShop
             try
             {
                 String dir = getDirectory();
-                //Console.WriteLine(dir);
                 authForm = new AuthForm();
                 String path = Directory.GetCurrentDirectory();
                 if (!Directory.Exists(dir + "SuperSharpShop"))
@@ -91,7 +90,6 @@ namespace SuperSharpShop
             if (userId != 0)
             {
                 conn.Open();
-                Console.WriteLine("Exited");
                 String sql = $"UPDATE users SET active = 0 WHERE ID = {userId}";
                 MySqlCommand command = new MySqlCommand(sql, conn);
                 command.ExecuteNonQuery();
@@ -105,14 +103,12 @@ namespace SuperSharpShop
             {
                 friends.Clear();
                 conn.Open();
-                Console.WriteLine(conn.State);
                 String sql = $"SELECT * FROM friends WHERE applicant_ID = {userId};";
                 MySqlCommand command = new MySqlCommand(sql, conn);
                 var da = new MySqlDataAdapter(command);
                 var ds = new DataSet();
                 da.Fill(ds, "users");
                 List<int> receivers = new List<int>();
-                //Console.WriteLine(int.Parse(reader[2].ToString()));
                 foreach (DataRow row in ds.Tables["users"].Rows)
                 {
                     if (bool.Parse(row[4].ToString()))
@@ -142,7 +138,6 @@ namespace SuperSharpShop
                 ds = new DataSet();
                 da.Fill(ds, "users");
                 List<int> applicants = new List<int>();
-                //Console.WriteLine(int.Parse(reader[2].ToString()));
                 foreach (DataRow row in ds.Tables["users"].Rows)
                 {
                     if (bool.Parse(row[4].ToString()))
@@ -175,7 +170,6 @@ namespace SuperSharpShop
                 DataSet ds = new DataSet();
                 da.Fill(ds, "users");
                 List<int> applicants = new List<int>();
-                //Console.WriteLine(int.Parse(reader[2].ToString()));
                 foreach (DataRow row in ds.Tables["users"].Rows)
                 {
                     if (!bool.Parse(row[3].ToString()))
@@ -252,15 +246,12 @@ namespace SuperSharpShop
         public static void getUser()
         {
             conn.Open();
-            Console.WriteLine(conn.State);
             String sql = $"SELECT * FROM users WHERE ID = {userId};";
             MySqlDataReader reader;
             MySqlCommand command = new MySqlCommand(sql, conn);
             reader = command.ExecuteReader();
             while (reader.Read())
             {
-                Console.WriteLine(bool.Parse(reader["active"].ToString()));
-                Console.WriteLine(reader["active"].ToString());
                 user = new User(int.Parse(reader["ID"].ToString()), reader["username"].ToString(), reader["email"].ToString(), int.Parse(reader["role"].ToString()), bool.Parse(reader["active"].ToString()));
             }
             conn.Close();
@@ -296,24 +287,20 @@ namespace SuperSharpShop
 
         public static void setItems(Control panel)
         {
-            //Console.WriteLine(120);
             foreach (List<Label> labels in App.titles)
             {
                 labels.Clear();
             }
-            //Console.WriteLine(125);
             foreach (List<Label> labels in App.priceCards)
             {
                 labels.Clear();
             }
-            //Console.WriteLine(130);
             if (panel.Name == "Shop")
             {
                 App.storePanel.Controls.Clear();
                 shopItems.Clear();
                 conn.Open();
                 String sql = "SELECT * FROM items;";
-                //MySqlDataReader reader;
                 MySqlCommand command = new MySqlCommand(sql, conn);
                 var da = new MySqlDataAdapter(command);
                 var ds = new DataSet();
