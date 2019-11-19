@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
@@ -150,6 +151,11 @@ namespace SuperSharpShop
                             command.ExecuteNonQuery();
                             Program.conn.Close();
                             Program.getUser();
+                            String dir = Program.getDirectory();
+                            if (!Directory.Exists(dir + $"SuperSharpShop/Common/{Program.user.Name}"))
+                            {
+                                Directory.CreateDirectory(dir + $"SuperSharpShop/Common/{Program.user.Name}");
+                            }
                             this.Close();
                             Application.EnableVisualStyles();
                             Application.SetCompatibleTextRenderingDefault(false);
@@ -158,6 +164,9 @@ namespace SuperSharpShop
                             Program.App.setComboBox();
                             Application.Run(Program.App);
                         }
+                    } else if (ds.Tables["users"].Rows.Count < 1)
+                    {
+                        loginPassword.Text = "";
                     }
                 }
             }
@@ -202,6 +211,11 @@ namespace SuperSharpShop
                             Program.App = new Form1();
                             Program.setAllItems();
                             Program.App.setComboBox();
+                            String dir = Program.getDirectory();
+                            if (!Directory.Exists(dir + $"SuperSharpShop/Common/{Program.user.Name}"))
+                            {
+                                Directory.CreateDirectory(dir + $"SuperSharpShop/Common/{Program.user.Name}");
+                            }
                             this.Close();
                             Application.EnableVisualStyles();
                             Application.SetCompatibleTextRenderingDefault(false);
@@ -277,6 +291,10 @@ namespace SuperSharpShop
             login.ForeColor = Color.Honeydew;
             loginPanel.Controls.Add(login);
             loginPanel.BackColor = Color.DimGray;
+            wrongLogin.Text = "Wrong username/password";
+            wrongLogin.BackColor = ColorTranslator.FromHtml("#f03e3e");
+            wrongLogin.BorderStyle = BorderStyle.FixedSingle;
+            wrongLogin.Visible = false;
             setTextBox(loginPanel, loginUsername, "Username");
             setTextBox(loginPanel, loginPassword, "Password");
             loginPassword.UseSystemPasswordChar = true;
@@ -352,5 +370,6 @@ namespace SuperSharpShop
         Button loginButton = new Button();
         Button registerButton = new Button();
         List<Panel> panels = new List<Panel>();
+        Label wrongLogin = new Label();
     }
 }

@@ -79,7 +79,6 @@ namespace SuperSharpShop
                 //setItems(App.lastPanel);
                 //App.setComboBox();
                 //Application.Run(App);
-                //conn.Close();
             }
             catch (BadImageFormatException exception)
             {
@@ -130,8 +129,8 @@ namespace SuperSharpShop
                     DataRow row = ds.Tables[0].Rows[0];
                     User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
                     friends.Add(user);
-                    user.setFriend(panel);
                     conn.Close();
+                    user.setFriend(panel);
                 }
                 conn.Open();
                 sql = $"SELECT * FROM friends WHERE receiver_ID = {userId};";
@@ -159,8 +158,8 @@ namespace SuperSharpShop
                     DataRow row = ds.Tables[0].Rows[0];
                     User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
                     friends.Add(user);
-                    user.setFriend(panel);
                     conn.Close();
+                    user.setFriend(panel);
                 }
             } else if (panel.Name == "Requests")
             {
@@ -191,8 +190,8 @@ namespace SuperSharpShop
                     DataRow row = ds.Tables[0].Rows[0];
                     User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
                     requestUsers.Add(user);
-                    user.setFriend(panel);
                     conn.Close();
+                    user.setFriend(panel);
                 }
             } else if (panel.Name == "Awaiting") {
                 awaitingUsers.Clear();
@@ -223,8 +222,8 @@ namespace SuperSharpShop
                     User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(),
                         int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
                     awaitingUsers.Add(user);
-                    user.setFriend(panel);
                     conn.Close();
+                    user.setFriend(panel);
                 }
             }
             else if (panel.Name == "Add")
@@ -236,12 +235,13 @@ namespace SuperSharpShop
                 var da = new MySqlDataAdapter(command);
                 var ds = new DataSet();
                 da.Fill(ds, "users");
+                Console.WriteLine(ds.Tables["users"].Rows);
+                conn.Close();
                 foreach (DataRow row in ds.Tables["users"].Rows)
                 {
                     User user = new User(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[4].ToString()), bool.Parse(row[5].ToString()));
                     users.Add(user);
                 }
-                conn.Close();
             }
         }
 
@@ -266,11 +266,9 @@ namespace SuperSharpShop
             if (system.Platform == PlatformID.Unix)
             {
                 return $"/home/{SystemInformation.UserName}/.local/share/";
-            } else if (system.Platform == PlatformID.Win32S)
+            } else if (system.Platform == PlatformID.MacOSX)
             {
-                path =  Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-                SetFolderPermission(path);
-                return path;
+                return $"/Users/{SystemInformation.UserName}/Library/Application Support/";
             }
             path =  Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
             SetFolderPermission(path);
@@ -298,8 +296,14 @@ namespace SuperSharpShop
             String connectionString = "SERVER=localhost;DATABASE=SuperSharpShop;UID=root;PASSWORD=;";
             //String connectionString = "SERVER=192.168.0.113;DATABASE=SuperSharpShop;UID=root;PASSWORD=;";
             conn = new MySqlConnection(connectionString);
+            //conn.StateChange += new StateChangeEventHandler(chenaged);
         }
 
+        public static void chenaged(object sender, EventArgs e)
+        {
+            Console.WriteLine(conn.State + " | " + e.ToString());
+        }
+        
         public static void setAllItems()
         {
             setItems(App.storePanel);
@@ -378,7 +382,7 @@ namespace SuperSharpShop
                 {
                     owned.Add(reader.GetValue(0).ToString());
                 }
-                String path = getDirectory() + "SuperSharpShop/Common/";
+                String path = getDirectory() + $"SuperSharpShop/Common/{user.Name}/";
                 List<String> dirs =  new List<string>(Directory.GetDirectories(path));
                 conn.Close();
                 foreach (String itemID in owned)
@@ -400,7 +404,6 @@ namespace SuperSharpShop
                             item.setItem();
                         }
                     }
-
                     conn.Close();
                 }
             }

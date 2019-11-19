@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Remoting.Channels;
 using System.Text;
 using System.Windows.Forms.VisualStyles;
+using Microsoft.Win32.SafeHandles;
 using MySql.Data.MySqlClient;
 using ContentAlignment = System.Drawing.ContentAlignment;
 
@@ -154,7 +155,6 @@ namespace SuperSharpShop
                     item = i;
                 }
             }
-            Console.WriteLine(price);
             PayForm payForm = new PayForm(price, item);
             payForm.Show();
         }
@@ -164,7 +164,7 @@ namespace SuperSharpShop
             Button button = (Button) sender;
             Console.WriteLine("Installing");
             String dirName = button.Name.Replace(" ", "").Replace(":", "");
-            String path = Program.getDirectory() + "SuperSharpShop/Common/";
+            String path = Program.getDirectory() + $"SuperSharpShop/Common/{Program.user.Name}";
             Directory.SetCurrentDirectory(path);
             Directory.CreateDirectory(dirName);
             Panel panel = new Panel();
@@ -174,7 +174,6 @@ namespace SuperSharpShop
             {
                 this.Controls.RemoveAt(2);
             }
-            Console.WriteLine(this.Controls.Count);
             this.Controls.Add(panel);
         }
 
@@ -293,7 +292,12 @@ namespace SuperSharpShop
                     list.Add(label.Text);
                 }
             }
-            if (name != "Search" && name != "SearchClick" && !list.Contains(name) && name != Program.user.Name && !friends.Contains(name))
+            List<String> users = new List<string>();
+            foreach (User user in Program.users)
+            {
+                users.Add(user.Name);
+            }
+            if (name != "Search" && name != "SearchClick" && !list.Contains(name) && name != Program.user.Name && !friends.Contains(name) && !users.Contains(name))
             {
                 setPanelButton(this.panel, new Button(), name);
             } else if (friends.Contains(name)) {
@@ -307,9 +311,6 @@ namespace SuperSharpShop
                 title.Font = new Font("Arial", 20, FontStyle.Bold);
                 panel.Controls.Add(title);
                 friendsPanels.Add(name);
-            } else if (name == Program.user.Name)
-            {
-                setProfile();
             } else if (list.Contains(name))
             {
                 List<int> indexes = new List<int>();
@@ -512,16 +513,39 @@ namespace SuperSharpShop
         /// Hier is je fucking comment, cunt.
         /// profilePanel remember it!!!!!!!
         /// </summary>
-        public void setProfile()
+        public void setProfile(Panel panel, int userId)
         {
+            if (Program.users.Count < 1)
+            {
+                Panel Panel1 = new Panel();
+                Panel1.Name = "Add";
+                Program.setFriends(Panel1);
+            }
+            User user = null;
+            if (userId == Program.userId)
+            {
+                user = Program.user;
+            }
+            else
+            {
+                foreach (User u in Program.users)
+                {
+                    Console.WriteLine(u.Id + " | " + u.Name);
+                    if (u.Id == userId)
+                    {
+                        user = u;
+                    }
+                }
+            }
+            setPanel(panel, user.Name);
             Label username = new Label();
             username.Location = new Point(25, 25);
             username.Size = new Size(200, 50);
-            username.Text = profilePanel.Name;
+            username.Text = panel.Name;
             username.TextAlign = ContentAlignment.MiddleCenter;
             username.BackColor = ColorTranslator.FromHtml("#454545");
             username.Font = new Font("Arial", 20, FontStyle.Bold);
-            profilePanel.Controls.Add(username);
+            panel.Controls.Add(username);
         }
 
         public void setCardEvents(GroupBox item)
@@ -656,7 +680,6 @@ namespace SuperSharpShop
                         list.Size = new Size(list.Size.Width, button.Size.Height * (list.Controls.IndexOf(button) + 1) + button.Size.Height / 2);
                         button.Location = new Point(0, button.Size.Height * list.Controls.IndexOf(button));
                         button.Click += new EventHandler(clickItemList);
-                        Console.WriteLine(list.Size.Height);
                     }
                 }
                 if (list.Controls.Count < 1)
@@ -723,7 +746,6 @@ namespace SuperSharpShop
                 userButton.Visible = true;
                 searchTitles.Clear();
                 searchPriceCards.Clear();
-                Console.WriteLine("SearchBar: " + searchBar.Text);
                 foreach (Control child in lastPanel.Controls)
                 {
                     bool check = false;
@@ -809,6 +831,8 @@ namespace SuperSharpShop
 
         public void setFriend(Panel panel, GroupBox item, int id, String name, String email,String role, bool active)
         {
+            Panel Panel1 = new Panel();
+            setProfile(Panel1, id);
             item.Name = name;
             panel.Controls.Add(item);
             item.Size = new Size(825, 65);
@@ -823,11 +847,15 @@ namespace SuperSharpShop
             item.Controls.Add(label);
             label.Size = new Size(item.Size.Width - 4, item.Size.Height - 10);
             label.Location = new Point(2, 8);
-            Label username = new Label();
+            Button username = new Button();
             username.Text = name;
+            username.Name = name;
+            username.FlatStyle = FlatStyle.Flat;
+            username.FlatAppearance.BorderSize = 0;
             username.Font = new Font("Arial", 14);
             username.Size = new Size(200, label.Size.Height);
             username.TextAlign = ContentAlignment.MiddleCenter;
+            username.Click += new EventHandler(panelSwitch);
             label.Controls.Add(username);
             Label emailBox = new Label();
             emailBox.Text = email;
@@ -847,7 +875,6 @@ namespace SuperSharpShop
             {
                 Label statusBox = new Label();
                 String status = "";
-                Console.WriteLine(active);
                 if (active)
                 {
                     status = "Online";
@@ -974,7 +1001,6 @@ namespace SuperSharpShop
         public void searchFriendsClear(Panel panel)
         {
             List<int> indexes = new List<int>();
-            Console.WriteLine(panel.Controls.Count);
             foreach (Control control in panel.Controls)
             {
                 if (panel.Controls.IndexOf(control) > 1)
@@ -1068,11 +1094,6 @@ namespace SuperSharpShop
             }
         }
 
-        public void setFooter(Panel parent, Panel panel)
-        {
-            
-        }
-        
         public void addItem(object sender, EventArgs e)
         {
             if (itemForm == null)
@@ -1224,7 +1245,6 @@ namespace SuperSharpShop
             list.BackColor = Color.Azure;
             searchBar.Location = new Point(20, 100);
             searchBar.Size = new Size(200, 21);
-            setPanel(profilePanel, Program.user.Name);
             userButton.Name = Program.user.Name;
             userButton.Text = Program.user.Name;
             userButton.FlatAppearance.BorderSize = 0;
@@ -1244,6 +1264,7 @@ namespace SuperSharpShop
             searchButton.BackColor = ColorTranslator.FromHtml("#858585");
             searchButton.Font = new Font("Arial", 7);
             searchButton.Click += new EventHandler(searchClick);
+            setProfile(profilePanel, Program.userId);
             setPanel(storePanel, "Shop");
             setPanel(ownedPanel, "Library");
             setPanel(installedPanel, "Installed");
